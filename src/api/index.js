@@ -46,7 +46,8 @@ const getPath = (url, param = {}) => {
 const getOpenApi = (type) => (key, param) =>
   new Promise((resolve, reject) => {
     if (key in OPEN_API[type]) {
-      return resolve({ url: [OPEN_API_ROOT, type, key].filter((path) => !!path).join('/'), name: OPEN_API[type][key] });
+      return resolve({ url: [OPEN_API_ROOT, type, key].filter((path) => !!path).join('/'),
+name: OPEN_API[type][key] });
     } else {
       reject('잘못된 API 정보');
     }
@@ -65,4 +66,5 @@ const getOpenApi = (type) => (key, param) =>
 const spot = getOpenApi('');
 const series = getOpenApi('json');
 
-export default { spot, series };
+export default { spot,
+series };
