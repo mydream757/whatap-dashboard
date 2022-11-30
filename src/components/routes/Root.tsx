@@ -4,16 +4,22 @@ import { FolderOutlined } from '@ant-design/icons';
 import { Layout, Menu } from 'antd';
 import { LAYOUT_BREAK_POINT, SIDE_WIDTH } from '../../config/constants';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
+import { Link, Outlet } from 'react-router-dom';
 
 const { Header, Content, Sider } = Layout;
 
 /* TODO: research project listing */
-const SAMPLE_PROJECT_KEY = 'project-id-1';
+const SAMPLE_PROJECT_KEY = 'project-id';
 const items: MenuItemType[] = [
   {
-    key: SAMPLE_PROJECT_KEY,
+    key: `${SAMPLE_PROJECT_KEY}-1`,
     icon: <FolderOutlined />,
-    label: 'project-name',
+    label: <Link to={'app'}>App</Link>,
+  },
+  {
+    key: `${SAMPLE_PROJECT_KEY}-2`,
+    icon: <FolderOutlined />,
+    label: <Link to={'dashboard'}>Dashboard</Link>,
   },
 ];
 
@@ -62,20 +68,8 @@ function DashboardHeader(): ReactElement {
 
 function DashboardContent(): ReactElement {
   return (
-    <Content
-      style={{
-        margin: '24px 16px 0',
-      }}
-    >
-      <div
-        className="site-layout-background"
-        style={{
-          padding: 24,
-          minHeight: 360,
-        }}
-      >
-        content
-      </div>
+    <Content>
+      <Outlet />
     </Content>
   );
 }

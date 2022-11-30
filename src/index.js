@@ -4,7 +4,7 @@ import './styles/index.css';
 
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { App, Root } from './components/routes';
+import { App, Dashboard, Root } from './components/routes';
 
 const router = createBrowserRouter([
   {
@@ -14,6 +14,10 @@ const router = createBrowserRouter([
       {
         path: 'app',
         element: <App />,
+      },
+      {
+        path: 'dashboard',
+        element: <Dashboard />,
       },
     ],
   },
