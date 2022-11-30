@@ -1,4 +1,4 @@
-import { OPEN_API, OPEN_API_HEADERS, OPEN_API_ROOT } from './constants';
+import { API_HEADER, API_ROOT, API_ROUTES } from './constants';
 
 const getPath = (url, param = {}) => {
   let path = url;
@@ -18,23 +18,23 @@ const getPath = (url, param = {}) => {
  * @param type
  */
 
-const getOpenApi = (type) => (key, param) =>
+const getOpenApi = (route) => (apiKey, param) =>
   new Promise((resolve, reject) => {
-    if (key in OPEN_API[type]) {
+    if (apiKey in API_ROUTES[route]) {
       return resolve({
-        url: [OPEN_API_ROOT, type, key].filter((path) => !!path).join('/'),
-        name: OPEN_API[type][key],
+        url: [API_ROOT, route, apiKey].filter((path) => !!path).join('/'),
+        name: API_ROUTES[route][apiKey],
       });
     } else {
       reject('잘못된 API 정보');
     }
   }).then(({ url, name }) =>
     fetch(getPath(url, param), {
-      headers: OPEN_API_HEADERS,
+      headers: API_HEADER,
     })
       .then((response) => response.json())
       .then((data) => ({
-        key,
+        apiKey,
         name,
         data,
       }))
