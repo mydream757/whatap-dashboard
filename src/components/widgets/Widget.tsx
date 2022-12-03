@@ -1,6 +1,8 @@
 import React, { ReactElement } from 'react';
 import { Col, Row, Space } from 'antd';
 import IconButton, { IconButtonProps } from '../iconButton/IconButton';
+import { ChartProps } from 'react-chartjs-2/dist/types';
+import WhatapChart from '../chart';
 
 type Feature = ({ type: 'iconButton' } & IconButtonProps) | { type: 'toggle' };
 
@@ -24,29 +26,31 @@ function FeatureComponent({ type, ...props }: Feature): ReactElement {
 
 function Header({ title, features }: HeaderProps): ReactElement {
   return (
-    <Space>
-      <Row justify={'space-around'}>
-        <Col>{title}</Col>
-        <Col>
-          <Row gutter={8} align={'middle'} wrap>
-            {(features || []).map((feature, index) => (
-              <Col key={index}>
-                <FeatureComponent {...feature} />
-              </Col>
-            ))}
-          </Row>
-        </Col>
-      </Row>
-    </Space>
+    <Row justify={'space-between'}>
+      <Col>{title}</Col>
+      <Col>
+        <Row gutter={8} align={'middle'} wrap>
+          {(features || []).map((feature, index) => (
+            <Col key={index}>
+              <FeatureComponent {...feature} />
+            </Col>
+          ))}
+        </Row>
+      </Col>
+    </Row>
   );
 }
 
 interface BodyProps {
-  data?: any;
+  chartProps: ChartProps;
 }
 
-function Body(props: BodyProps): ReactElement {
-  return <Space>Widget Body</Space>;
+function Body({ chartProps }: BodyProps): ReactElement {
+  return (
+    <Space>
+      <WhatapChart {...chartProps} />
+    </Space>
+  );
 }
 
 export interface WidgetProps {
