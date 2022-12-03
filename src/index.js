@@ -5,6 +5,7 @@ import './styles/index.css';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { App, Dashboard, Root } from './components/routes';
+import { ConnectionProvider } from './context/connectionContext';
 
 const router = createBrowserRouter([
   {
@@ -24,7 +25,9 @@ const router = createBrowserRouter([
 ]);
 ReactDOM.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <ConnectionProvider>
+      <RouterProvider router={router} />
+    </ConnectionProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

@@ -1,12 +1,14 @@
-import React, { ReactElement, useMemo } from 'react';
+import React, { ReactElement, useEffect, useMemo } from 'react';
 import { Col, Layout, Row } from 'antd';
 import Widget, { WidgetProps } from '../widgets/Widget';
 import { format } from 'date-fns';
-import { useSpotConnections } from '../../hooks/useSpotConnections';
+import { useConnection } from '../../context/connectionContext';
 
 export default function Dashboard(): ReactElement {
-  const apiResult = useSpotConnections({
-    apis: [
+  const { queryConnection, datum } = useConnection();
+
+  useEffect(() => {
+    [
       'cpu',
       'act_agent',
       'act_sql',
@@ -16,12 +18,17 @@ export default function Dashboard(): ReactElement {
       'dbc_idle',
       'tps',
       'txcount',
-    ],
-  });
+      'act_socket',
+      'act_method',
+      'actx',
+      'user',
+      'threadpool_queue',
+    ].forEach((key) => queryConnection(key as unknown as any));
+  }, []);
 
   const parsedCommon = useMemo((): WidgetProps[] => {
-    return Object.keys(apiResult).map((key) => {
-      const data = apiResult[key as keyof typeof apiResult]?.data;
+    return Object.keys(datum).map((key) => {
+      const data = datum[key as keyof typeof datum]?.data;
 
       return {
         header: {
@@ -29,12 +36,14 @@ export default function Dashboard(): ReactElement {
         },
         body: {
           chartProps: {
-            type: 'bar' as const,
+            type: 'line' as const,
             data: {
-              labels: data?.map((data) => format(new Date(data.time), 'mm:ss')),
+              labels: (data || [])?.map((data) =>
+                format(new Date(data.time), 'mm:ss')
+              ),
               datasets: [
                 {
-                  type: 'bar',
+                  type: 'line',
                   label: key,
                   data: (data || []).map((data) => data.value),
                   borderColor: 'rgb(75, 192, 192)',
@@ -45,7 +54,7 @@ export default function Dashboard(): ReactElement {
         },
       };
     });
-  }, [apiResult]);
+  }, [datum]);
 
   return (
     <Layout style={{ padding: '8px' }}>
