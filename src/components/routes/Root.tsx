@@ -68,7 +68,7 @@ function DashboardHeader(): ReactElement {
 
 function DashboardContent(): ReactElement {
   return (
-    <Content>
+    <Content style={{ overflow: 'auto' }}>
       <Outlet />
     </Content>
   );
