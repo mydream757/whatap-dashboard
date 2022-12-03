@@ -9,15 +9,6 @@ const getPath = (url, param = {}) => {
   return path;
 };
 
-/**
- * : ((
- *     key: keyof typeof OPEN_API['json'] & keyof typeof OPEN_API[''],
- *     param: any
- *   ) => Promise<{ key: string; name: string; data: any }>)
- *
- * @param type
- */
-
 const getOpenApi = (route) => (apiKey, param) =>
   new Promise((resolve, reject) => {
     if (apiKey in API_ROUTES[route]) {
