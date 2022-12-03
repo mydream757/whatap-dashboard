@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import { ReactElement, useMemo } from 'react';
 import { Chart } from 'react-chartjs-2';
 
 import {
@@ -51,6 +51,36 @@ ChartJS.register(
 };
  */
 
-export default function WhatapChart({ ...props }: ChartProps): ReactElement {
-  return <Chart updateMode={'active'} {...props} />;
+const REAL_TIME_DATA_POOL = 15;
+
+export default function WhatapChart({
+  data,
+  ...props
+}: ChartProps): ReactElement {
+  const parsedChartDataForRealTime = useMemo(() => {
+    return {
+      ...data,
+      labels: data.labels?.slice(
+        data.labels?.length - REAL_TIME_DATA_POOL > 0
+          ? data.labels?.length - REAL_TIME_DATA_POOL
+          : 0,
+        data.labels?.length
+      ),
+      datasets: data.datasets.map((dataSet) => {
+        return {
+          ...dataSet,
+          data: dataSet.data?.slice(
+            dataSet.data?.length - REAL_TIME_DATA_POOL > 0
+              ? dataSet.data?.length - REAL_TIME_DATA_POOL
+              : 0,
+            dataSet.data?.length
+          ),
+        };
+      }),
+    };
+  }, [data]);
+
+  return (
+    <Chart updateMode={'active'} {...props} data={parsedChartDataForRealTime} />
+  );
 }
