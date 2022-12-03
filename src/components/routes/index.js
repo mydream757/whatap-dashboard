@@ -1,5 +1,5 @@
 import Root from './Root';
-import App from './App';
+import Guide from './Guide';
 import Dashboard from './Dashboard';
 
-export { App, Root, Dashboard };
+export { Guide, Root, Dashboard };

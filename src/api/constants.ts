@@ -1,4 +1,5 @@
-const API_ROOT = 'https://api.whatap.io/open/api';
+const API_ROOT = 'https://api.whatap.io/open';
+const DEMO_ACCOUNT_API_TOCKEN = '1VQR6S6QY715GKROD4O8';
 const DEMO_PROJECT_API_TOCKEN = 'XGJHUSQZTI2AVIENWA27HI5V';
 const DEMO_PROJECT_CODE = 5490;
 const API_HEADER = {
@@ -31,16 +32,42 @@ const SPOT_REGISTRY = {
 
 const SERIES_REGISTRY = {
   'exception/{stime}/{etime}': 'Exception 발생 ',
+  'project': '프로젝트 정보 조회',
+  'projects': '프로젝트 목록 조회',
+  'project/{pcode}/members': '프로젝트 멤버 목록 조회',
+  'remote/{stime}/{etime}': 'Client IP',
+  'transaction/{stime}/{etime}': '트랜잭션',
+  'visitor_5m/{stime}/{etime}': '액티브 사용자 (5분 단위)',
+  'visitor_h/{stime}/{etime}': '액티브 사용자 (1시간 단위)',
 } as const;
 
-const API_ROUTES = {
-  '': SPOT_REGISTRY,
-  'json': SERIES_REGISTRY,
+const META_REGISTRY = {
+  agents: '프로젝트 에이전트 상태 및 호스트 조회',
 } as const;
+
+const ACCOUNT_META = {
+  projects: '프로젝트 목록 조회',
+} as const;
+
+const ACCOUNT_API_ROUTES = {
+  'api/json': ACCOUNT_META,
+} as const;
+
+const PROJECT_API_ROUTES = {
+  'api': SPOT_REGISTRY,
+  'api/json': SERIES_REGISTRY,
+  'json': META_REGISTRY,
+} as const;
+
+const API_CATEGORIES = {
+  account: ACCOUNT_API_ROUTES,
+  project: PROJECT_API_ROUTES,
+};
 
 export {
-  API_ROUTES,
+  API_CATEGORIES,
   API_ROOT,
+  DEMO_ACCOUNT_API_TOCKEN,
   DEMO_PROJECT_API_TOCKEN,
   DEMO_PROJECT_CODE,
   API_HEADER,

@@ -3,30 +3,45 @@ import { Col, Layout, Row } from 'antd';
 import Widget, { WidgetProps } from '../widgets/Widget';
 import { format } from 'date-fns';
 import { useConnection } from '../../context/connectionContext';
+import { useLoaderData } from 'react-router-dom';
+import { API_CATEGORIES } from '../../api/constants';
+
+export function dashboardLoader({ params }: any) {
+  return params.pcode;
+}
 
 export default function Dashboard(): ReactElement {
-  const { queryConnection, datum } = useConnection();
+  const pCode = useLoaderData();
+  const { queryConnection, datum, selectProject, clear, config } =
+    useConnection();
 
   useEffect(() => {
-    [
-      'cpu',
-      'act_agent',
-      'act_sql',
-      'threadpool_active',
-      'cpucore',
-      'dbc_active',
-      'dbc_idle',
-      'tps',
-      'txcount',
-      'act_socket',
-      'act_method',
-      'actx',
-      'user',
-      'threadpool_queue',
-    ].forEach((key) => queryConnection(key as unknown as any));
-  }, []);
+    if (typeof Number(pCode) === 'number' && config[Number(pCode)]) {
+      selectProject(Number(pCode));
 
-  const parsedCommon = useMemo((): WidgetProps[] => {
+      [
+        'cpu',
+        'act_agent',
+        'act_sql',
+        'threadpool_active',
+        'cpucore',
+        'dbc_active',
+        'dbc_idle',
+        'tps',
+        'txcount',
+        'act_socket',
+        'act_method',
+        'actx',
+        'user',
+        'threadpool_queue',
+      ].forEach((key) =>
+        queryConnection(key as keyof typeof API_CATEGORIES['project']['api'])
+      );
+    }
+    return () => clear();
+  }, [pCode, config]);
+
+  const parsedBasic = useMemo((): WidgetProps[] => {
     return Object.keys(datum).map((key) => {
       const data = datum[key as keyof typeof datum]?.data;
 
@@ -50,6 +65,15 @@ export default function Dashboard(): ReactElement {
                 },
               ],
             },
+            options: {
+              scales: {
+                y: {
+                  min: -5,
+                  stepSize: 5,
+                },
+              },
+            },
+            tension: 0.1,
           },
         },
       };
@@ -59,7 +83,7 @@ export default function Dashboard(): ReactElement {
   return (
     <Layout style={{ padding: '8px' }}>
       <Row gutter={[8, 8]} wrap>
-        {parsedCommon.map((props, index) => (
+        {parsedBasic.map((props, index) => (
           <Col key={`${index}`}>
             <Widget {...props} />
           </Col>

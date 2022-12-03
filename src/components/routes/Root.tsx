@@ -1,47 +1,91 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useEffect } from 'react';
 import { FolderOutlined } from '@ant-design/icons';
 
 import { Layout, Menu } from 'antd';
 import { LAYOUT_BREAK_POINT, SIDE_WIDTH } from '../../config/constants';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLoaderData } from 'react-router-dom';
+import api from '../../api';
+import { useConnection } from '../../context/connectionContext';
 
 const { Header, Content, Sider } = Layout;
 
+type ProjectListItem = {
+  apiToken: string;
+  createTime: string;
+  platform: string;
+  productType: string;
+  projectCode: number;
+  projectName: string;
+  status: string;
+};
+
 /* TODO: research project listing */
-const SAMPLE_PROJECT_KEY = 'project-id';
-const items: MenuItemType[] = [
+const DEFAULT_MENUS: MenuItemType[] = [
   {
-    key: `${SAMPLE_PROJECT_KEY}-1`,
+    key: 'guide',
     icon: <FolderOutlined />,
-    label: <Link to={'app'}>App</Link>,
-  },
-  {
-    key: `${SAMPLE_PROJECT_KEY}-2`,
-    icon: <FolderOutlined />,
-    label: <Link to={'dashboard'}>Dashboard</Link>,
+    label: <Link to={'guide'}>Guide</Link>,
   },
 ];
 
-function Sidebar(): ReactElement {
+interface SidebarProps {
+  projects: ProjectListItem[];
+}
+
+const getMenuItem = ({
+  projectCode,
+  projectName,
+  onClick,
+}: ProjectListItem & { onClick?: () => void }): MenuItemType => {
+  return {
+    key: `${projectCode}`,
+    label: (
+      <Link onClick={onClick} to={`dashboard/${projectCode}`}>
+        ${projectName}
+      </Link>
+    ),
+  };
+};
+
+function Sidebar({ projects }: SidebarProps): ReactElement {
+  const menus = projects.map((project) =>
+    getMenuItem({
+      ...project,
+    })
+  );
+  const defaultSelected = menus.length > 0
+? [menus[0].key as string]
+: [];
+
   return (
-    <Sider
-      breakpoint={LAYOUT_BREAK_POINT}
-      collapsedWidth={SIDE_WIDTH}
-      onBreakpoint={(broken) => {
-        console.log(broken);
-      }}
-      onCollapse={(collapsed, type) => {
-        console.log(collapsed, type);
-      }}
-    >
-      <div className="logo">Logo</div>
-      <Menu
-        theme="dark"
-        mode="inline"
-        defaultSelectedKeys={[SAMPLE_PROJECT_KEY]}
-        items={items}
-      />
+    <Sider breakpoint={LAYOUT_BREAK_POINT} collapsedWidth={SIDE_WIDTH}>
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <div className="logo">Logo</div>
+        <Menu
+          theme="dark"
+          mode={'inline'}
+          style={{
+            overflow: 'auto',
+          }}
+          defaultSelectedKeys={defaultSelected}
+          items={[
+            ...DEFAULT_MENUS,
+            {
+              key: 'projects',
+              icon: <FolderOutlined />,
+              label: 'Projects',
+              children: menus,
+            },
+          ]}
+        />
+      </div>
     </Sider>
   );
 }
@@ -74,10 +118,28 @@ function DashboardContent(): ReactElement {
   );
 }
 
+export async function rootLoader() {
+  const result = await api.accountMeta('projects');
+  return result.data.data || ([] as ProjectListItem[]);
+}
+
 export default function Root(): ReactElement {
+  const { setApiTokenMap } = useConnection();
+  const projects = useLoaderData();
+
+  useEffect(() => {
+    if (projects) {
+      const tokenMap: { [key: string]: string } = {};
+      (projects as ProjectListItem[]).forEach((project) => {
+        tokenMap[project.projectCode] = project.apiToken;
+      });
+      setApiTokenMap(tokenMap);
+    }
+  }, [projects]);
+
   return (
     <Layout style={{ height: '100%' }}>
-      <Sidebar />
+      <Sidebar projects={projects as ProjectListItem[]} />
       <Layout>
         <DashboardHeader />
         <DashboardContent />

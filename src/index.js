@@ -4,21 +4,25 @@ import './styles/index.css';
 
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { App, Dashboard, Root } from './components/routes';
+import { Dashboard, Guide, Root } from './components/routes';
 import { ConnectionProvider } from './context/connectionContext';
+import { rootLoader } from './components/routes/Root';
+import { dashboardLoader } from './components/routes/Dashboard';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Root />,
+    loader: rootLoader,
     children: [
       {
-        path: 'app',
-        element: <App />,
+        path: 'guide',
+        element: <Guide />,
       },
       {
-        path: 'dashboard',
+        path: 'dashboard/:pcode',
         element: <Dashboard />,
+        loader: dashboardLoader,
       },
     ],
   },
