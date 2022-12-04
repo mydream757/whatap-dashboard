@@ -1,8 +1,11 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, ReactNode, useMemo } from 'react';
 import { Col, Row, Space } from 'antd';
 import IconButton, { IconButtonProps } from '../iconButton/IconButton';
-import { ChartProps } from 'react-chartjs-2/dist/types';
-import WhatapChart from '../chart';
+import WhatapChart, { LINE_DEFAULT_BORDER_COLOR } from '../chart';
+import { WidgetDataConfig } from '../chart/constants';
+import { useConnection } from '../../context/connectionContext';
+import { Informatics } from '../informatics';
+import { ChartType } from 'chart.js';
 
 type Feature = ({ type: 'iconButton' } & IconButtonProps) | { type: 'toggle' };
 
@@ -41,16 +44,69 @@ function Header({ title, features }: HeaderProps): ReactElement {
   );
 }
 
+type WidgetType = 'informatics' | 'line' | 'bar';
+
 interface BodyProps {
-  chartProps: ChartProps;
+  type: WidgetType;
+  labels?: string[];
+  dataConfigs: WidgetDataConfig[];
 }
 
-function Body({ chartProps }: BodyProps): ReactElement {
-  return (
-    <Space>
-      <WhatapChart {...chartProps} />
-    </Space>
-  );
+function Body({ type, dataConfigs, labels }: BodyProps): ReactElement {
+  const { datum } = useConnection();
+  let innerRender: ReactNode;
+
+  switch (type) {
+    case 'bar':
+    case 'line':
+      innerRender = (
+        <WhatapChart
+          type={type}
+          data={{
+            labels,
+            datasets: useMemo(
+              () =>
+                dataConfigs.map((config) => {
+                  return {
+                    type: config.type as ChartType,
+                    backgroundColor:
+                      config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
+                    borderColor:
+                      config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
+                    label: config.title,
+                    data: (datum[config.apiUrl] || []).map(
+                      (result) => result.data?.value
+                    ) as number[],
+                  };
+                }),
+              [labels]
+            ),
+          }}
+        />
+      );
+      break;
+    case 'informatics':
+    default:
+      innerRender = (
+        <Informatics
+          datum={useMemo(
+            () =>
+              dataConfigs.map((config) => {
+                const result = datum[config.apiUrl];
+                return {
+                  title: config.title,
+                  value: result?.length
+                    ? result[result.length - 1].data.value
+                    : 0,
+                };
+              }),
+            [labels]
+          )}
+        />
+      );
+      break;
+  }
+  return <Space>{innerRender}</Space>;
 }
 
 export interface WidgetProps {

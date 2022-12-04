@@ -1,23 +1,22 @@
-import React, {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import { API_CATEGORIES } from '../api/constants';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import getApiModule from '../api/getApiModule';
+import { ApiCategoryKeys } from '../components/chart/constants';
+import { DEMO_ACCOUNT_API_TOCKEN } from '../api/constants';
 
-interface ConnectionResult<Data> {
-  data: { value: Data; time: Date }[];
+export interface ConnectionResult<Data> {
+  data: { value: Data; time: number };
 }
 
 type ApiState = Partial<{
-  [key in keyof typeof API_CATEGORIES['project']['api']]: ConnectionResult<number>;
+  [key: string]: ConnectionResult<number>[];
 }>;
 
 interface ConnectionContextReturn {
-  queryConnection: (key: keyof typeof API_CATEGORIES['project']['api']) => void;
+  queryConnection: (
+    pcode: number,
+    category: ApiCategoryKeys,
+    key: string
+  ) => void;
   selectProject: (projectCode: number) => void;
   setApiTokenMap: (value: { [key: string]: string }) => void;
   datum: ApiState;
@@ -26,8 +25,8 @@ interface ConnectionContextReturn {
 }
 
 const ConnectionContext = React.createContext<ConnectionContextReturn>({
-  queryConnection: (key) => {
-    console.log(key);
+  queryConnection: (pcode, category, key) => {
+    console.log(category, key);
   },
   selectProject: (projectCode) => {
     console.log(projectCode);
@@ -43,7 +42,8 @@ const ConnectionContext = React.createContext<ConnectionContextReturn>({
 });
 
 type ConnectionStatus = {
-  key: keyof typeof API_CATEGORIES['project']['api'];
+  key: string;
+  category: ApiCategoryKeys;
 };
 
 interface ConnectionState {
@@ -51,7 +51,7 @@ interface ConnectionState {
   waits: ConnectionStatus[];
 }
 
-const MAX_PARALLEL_COUNT = 5;
+const MAX_PARALLEL_COUNT = 6;
 
 function ConnectionProvider({ children }: { children?: ReactNode }) {
   const [config, setConfig] = useState<Record<number, string>>({});
@@ -60,111 +60,131 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   });
   const count = useRef<number>(0);
   const timeouts = useRef<NodeJS.Timeout[]>([]);
+  const callbacks = useRef<{ [key: string]: () => void }>({});
   const [datum, setDatum] = useState<ApiState>({});
 
   useEffect(() => {
-    if (count.current < MAX_PARALLEL_COUNT && state.waits.length) {
+    if (
+      state.projectCode &&
+      count.current < MAX_PARALLEL_COUNT &&
+      state.waits.length
+    ) {
       const next = state.waits[0];
       setState((prevState) => ({
         ...prevState,
         waits: prevState.waits.slice(1),
       }));
-      queryConnection(next.key);
+      queryConnection(state.projectCode, next.category, next.key);
     }
   }, [count.current, config, state]);
 
-  const setApiTokenMap = useCallback((value: { [key: number]: string }) => {
+  const setApiTokenMap = (value: { [key: number]: string }) => {
     setConfig(value);
-  }, []);
+  };
 
-  const clear = useCallback(() => {
-    setState({ waits: [] });
+  const clear = () => {
+    setState(() => ({ waits: [] }));
     timeouts.current.forEach((timeout) => {
       clearTimeout(timeout);
     });
-    setDatum({});
-  }, [timeouts]);
+    timeouts.current = [];
+    callbacks.current = {};
 
-  const selectProject = useCallback(
-    (projectCode: number) => {
+    setDatum({});
+  };
+
+  const selectProject = (projectCode: number) => {
+    clear();
+    setState((prevState) => ({
+      ...prevState,
+      projectCode,
+    }));
+  };
+
+  const queryConnection = (
+    pcode: number,
+    category: ApiCategoryKeys,
+    key: string
+  ) => {
+    if (!config || !state.projectCode || !config[state.projectCode]) {
       setState((prevState) => ({
         ...prevState,
-        projectCode,
+        waits: [
+          ...prevState.waits,
+          {
+            category,
+            key,
+          },
+        ],
       }));
-    },
-    [config]
-  );
-
-  const queryConnection = useCallback(
-    (key: keyof typeof API_CATEGORIES['project']['api']) => {
-      if (!config || !state.projectCode || !config[state.projectCode]) {
-        setState((prevState) => ({
-          ...prevState,
-          waits: [
-            ...prevState.waits,
-            {
-              key,
-            },
-          ],
-        }));
-        return;
+      return;
+    }
+    if (count.current < MAX_PARALLEL_COUNT) {
+      count.current += 1;
+      let header;
+      switch (category) {
+        case 'account':
+          header = {
+            'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
+          };
+          break;
+        case 'project':
+        default:
+          header = {
+            'x-whatap-token': config[pcode],
+            'x-whatap-pcode': pcode,
+          };
+          break;
       }
-      if (count.current < MAX_PARALLEL_COUNT) {
-        count.current += 1;
-        getApiModule('project', {
-          'x-whatap-token': config[state.projectCode],
-          'x-whatap-pcode': Number(state.projectCode),
-        })('api')(key)
-          .then((result) => {
-            setDatum((prevState) => {
-              return {
-                ...prevState,
-                [key]: {
-                  ...prevState[key],
-                  data: [
-                    ...(prevState[key]?.data || []),
-                    {
-                      value: result.data,
-                      time: Date.now(),
-                    },
-                  ],
+      getApiModule(category, { ...header })(key)
+        .then((result) => {
+          setDatum((prevState) => ({
+            ...prevState,
+            [key]: [
+              ...(prevState[key] || []),
+              {
+                data: {
+                  value: result.data,
+                  time: Date.now(),
                 },
-              };
-            });
-            count.current -= 1;
-            const timeout = setTimeout(() => {
-              queryConnection(key);
-            }, 5000);
-            timeouts.current.push(timeout);
-          })
-          .catch(() => {
-            count.current -= 1;
-            //TODO: casing error status
-            setState((prevState) => ({
-              ...prevState,
-              waits: [
-                ...prevState.waits,
-                {
-                  key,
-                },
-              ],
-            }));
-          });
-      } else {
-        console.log('queue push:', key);
-        setState((prevState) => ({
-          ...prevState,
-          waits: [
-            ...prevState.waits,
-            {
-              key,
-            },
-          ],
-        }));
-      }
-    },
-    [state, count.current]
-  );
+              },
+            ],
+          }));
+          count.current -= 1;
+          const timeout = setTimeout(
+            () => queryConnection(pcode, category, key),
+            5000
+          );
+          timeouts.current.push(timeout);
+        })
+        .catch(() => {
+          count.current -= 1;
+          //TODO: casing error status
+          setState((prevState) => ({
+            ...prevState,
+            waits: [
+              ...prevState.waits,
+              {
+                category,
+                key,
+              },
+            ],
+          }));
+        });
+    } else {
+      console.log('queue push:', key);
+      setState((prevState) => ({
+        ...prevState,
+        waits: [
+          ...prevState.waits,
+          {
+            category,
+            key,
+          },
+        ],
+      }));
+    }
+  };
 
   return (
     <ConnectionContext.Provider

@@ -1,5 +1,5 @@
-import { ReactElement, useMemo } from 'react';
-import { Chart } from 'react-chartjs-2';
+import { ReactElement } from 'react';
+import { Chart, ChartProps } from 'react-chartjs-2';
 
 import {
   BarController,
@@ -13,7 +13,6 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js';
-import { ChartProps } from 'react-chartjs-2/dist/types';
 
 ChartJS.register(
   LinearScale,
@@ -52,35 +51,10 @@ ChartJS.register(
  */
 
 const REAL_TIME_DATA_POOL = 15;
-
+export const LINE_DEFAULT_BORDER_COLOR = 'rgb(75, 192, 192)';
 export default function WhatapChart({
   data,
   ...props
 }: ChartProps): ReactElement {
-  const parsedChartDataForRealTime = useMemo(() => {
-    return {
-      ...data,
-      labels: data.labels?.slice(
-        data.labels?.length - REAL_TIME_DATA_POOL > 0
-          ? data.labels?.length - REAL_TIME_DATA_POOL
-          : 0,
-        data.labels?.length
-      ),
-      datasets: data.datasets.map((dataSet) => {
-        return {
-          ...dataSet,
-          data: dataSet.data?.slice(
-            dataSet.data?.length - REAL_TIME_DATA_POOL > 0
-              ? dataSet.data?.length - REAL_TIME_DATA_POOL
-              : 0,
-            dataSet.data?.length
-          ),
-        };
-      }),
-    };
-  }, [data]);
-
-  return (
-    <Chart updateMode={'active'} {...props} data={parsedChartDataForRealTime} />
-  );
+  return <Chart {...props} updateMode={'active'} data={data} />;
 }

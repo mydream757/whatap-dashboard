@@ -1,91 +1,164 @@
-import React, { ReactElement, useEffect, useMemo } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { Col, Layout, Row } from 'antd';
 import Widget, { WidgetProps } from '../widgets/Widget';
-import { format } from 'date-fns';
 import { useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
+import { WidgetDataConfig } from '../chart/constants';
 import { API_CATEGORIES } from '../../api/constants';
+import { format } from 'date-fns';
 
 export function dashboardLoader({ params }: any) {
   return params.pcode;
 }
 
+const widgetList: WidgetProps[] = [
+  {
+    header: {
+      title: 'AGENTS',
+    },
+    body: {
+      type: 'informatics',
+      dataConfigs: [
+        {
+          title: 'Active agents',
+          apiCategory: 'project',
+          apiUrl: 'api/act_agent',
+        },
+        {
+          title: 'Inactive agents',
+          apiCategory: 'project',
+          apiUrl: 'api/inact_agent',
+        },
+      ] as WidgetDataConfig[],
+    },
+  },
+  {
+    header: {
+      title: 'HOST',
+    },
+    body: {
+      type: 'informatics',
+      dataConfigs: [
+        {
+          title: 'hosts',
+          apiCategory: 'project',
+          apiUrl: 'api/host',
+        },
+        {
+          title: 'SUM: cpu cores',
+          apiCategory: 'project',
+          apiUrl: 'api/cpucore',
+        },
+      ] as WidgetDataConfig[],
+    },
+  },
+  {
+    header: {
+      title: 'TRANSACTION',
+    },
+    body: {
+      type: 'informatics',
+      dataConfigs: [
+        {
+          title: 'Transactions',
+          apiCategory: 'project',
+          apiUrl: 'api/txcount',
+        },
+        {
+          title: 'tps',
+          apiCategory: 'project',
+          apiUrl: 'api/tps',
+        },
+      ] as WidgetDataConfig[],
+    },
+  },
+  {
+    header: {
+      title: API_CATEGORIES['project']['api/rtime'],
+    },
+    body: {
+      type: 'line',
+      labels: [],
+      dataConfigs: [
+        {
+          title: 'rtime',
+          apiCategory: 'project',
+          apiUrl: 'api/rtime',
+        },
+      ] as WidgetDataConfig[],
+    },
+  },
+  {
+    header: {
+      title: 'DB Connection',
+    },
+    body: {
+      type: 'line',
+      labels: [],
+      dataConfigs: [
+        {
+          title: API_CATEGORIES['project']['api/dbc_count'],
+          apiCategory: 'project',
+          apiUrl: 'api/dbc_count',
+        },
+        {
+          title: API_CATEGORIES['project']['api/dbc_active'],
+          apiCategory: 'project',
+          backgroundColor: 'rgb(89, 209, 65)',
+          apiUrl: 'api/dbc_active',
+        },
+        {
+          title: API_CATEGORIES['project']['api/dbc_idle'],
+          apiCategory: 'project',
+          backgroundColor: 'rgb(190, 23, 55)',
+          apiUrl: 'api/dbc_idle',
+        },
+      ] as WidgetDataConfig[],
+    },
+  },
+];
+
 export default function Dashboard(): ReactElement {
   const pCode = useLoaderData();
-  const { queryConnection, datum, selectProject, clear, config } =
-    useConnection();
+  const { selectProject, config, clear, queryConnection } = useConnection();
+  const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    if (typeof Number(pCode) === 'number' && config[Number(pCode)]) {
-      selectProject(Number(pCode));
-
-      [
-        'cpu',
-        'act_agent',
-        'act_sql',
-        'threadpool_active',
-        'cpucore',
-        'dbc_active',
-        'dbc_idle',
-        'tps',
-        'txcount',
-        'act_socket',
-        'act_method',
-        'actx',
-        'user',
-        'threadpool_queue',
-      ].forEach((key) =>
-        queryConnection(key as keyof typeof API_CATEGORIES['project']['api'])
-      );
+    async function initialize() {
+      if (typeof Number(pCode) === 'number' && config[Number(pCode)]) {
+        await selectProject(Number(pCode));
+        widgetList.forEach((config) => {
+          config.body.dataConfigs.forEach((config) => {
+            queryConnection(Number(pCode), config.apiCategory, config.apiUrl);
+          });
+        });
+      }
     }
-    return () => clear();
+
+    initialize();
+    const timeout = setInterval(() => {
+      setLabels((prevState) => [...prevState, format(new Date(), 'mm:ss')]);
+    }, 5000);
+
+    return () => {
+      clear();
+      clearInterval(timeout);
+    };
   }, [pCode, config]);
-
-  const parsedBasic = useMemo((): WidgetProps[] => {
-    return Object.keys(datum).map((key) => {
-      const data = datum[key as keyof typeof datum]?.data;
-
-      return {
-        header: {
-          title: key,
-        },
-        body: {
-          chartProps: {
-            type: 'line' as const,
-            data: {
-              labels: (data || [])?.map((data) =>
-                format(new Date(data.time), 'mm:ss')
-              ),
-              datasets: [
-                {
-                  type: 'line',
-                  label: key,
-                  data: (data || []).map((data) => data.value),
-                  borderColor: 'rgb(75, 192, 192)',
-                },
-              ],
-            },
-            options: {
-              scales: {
-                y: {
-                  min: -5,
-                  stepSize: 5,
-                },
-              },
-            },
-            tension: 0.1,
-          },
-        },
-      };
-    });
-  }, [datum]);
 
   return (
     <Layout style={{ padding: '8px' }}>
       <Row gutter={[8, 8]} wrap>
-        {parsedBasic.map((props, index) => (
-          <Col key={`${index}`}>
-            <Widget {...props} />
+        {widgetList.map(({ header, body }, index) => (
+          <Col key={`${pCode}-${index}`}>
+            <Widget
+              key={`${pCode}-${index}`}
+              header={header}
+              body={{
+                ...body,
+                labels,
+              }}
+            />
           </Col>
         ))}
       </Row>

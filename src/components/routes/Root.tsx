@@ -2,13 +2,16 @@ import React, { ReactElement, useEffect } from 'react';
 import { FolderOutlined } from '@ant-design/icons';
 
 import { Layout, Menu } from 'antd';
-import { LAYOUT_BREAK_POINT, SIDE_WIDTH } from '../../config/constants';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import { Link, Outlet, useLoaderData } from 'react-router-dom';
-import api from '../../api';
 import { useConnection } from '../../context/connectionContext';
+import getApiModule from '../../api/getApiModule';
+import { DEMO_ACCOUNT_API_TOCKEN } from '../../api/constants';
 
 const { Header, Content, Sider } = Layout;
+
+const LAYOUT_BREAK_POINT = 'sm';
+const SIDE_WIDTH = 200;
 
 type ProjectListItem = {
   apiToken: string;
@@ -54,9 +57,6 @@ function Sidebar({ projects }: SidebarProps): ReactElement {
       ...project,
     })
   );
-  const defaultSelected = menus.length > 0
-? [menus[0].key as string]
-: [];
 
   return (
     <Sider breakpoint={LAYOUT_BREAK_POINT} collapsedWidth={SIDE_WIDTH}>
@@ -67,14 +67,17 @@ function Sidebar({ projects }: SidebarProps): ReactElement {
           flexDirection: 'column',
         }}
       >
-        <div className="logo">Logo</div>
+        <div className="logo" style={{ padding: '16px' }}>
+          <Link to={'/'}>
+            <img width={'100%'} src={'/logo_header.svg'} />
+          </Link>
+        </div>
         <Menu
           theme="dark"
           mode={'inline'}
           style={{
             overflow: 'auto',
           }}
-          defaultSelectedKeys={defaultSelected}
           items={[
             ...DEFAULT_MENUS,
             {
@@ -119,7 +122,9 @@ function DashboardContent(): ReactElement {
 }
 
 export async function rootLoader() {
-  const result = await api.accountMeta('projects');
+  const result = await getApiModule('account', {
+    'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
+  })('api/json/projects');
   return result.data.data || ([] as ProjectListItem[]);
 }
 

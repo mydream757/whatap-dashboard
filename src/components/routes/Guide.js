@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
-import api from '../../api';
+import getApiModule from '../../api/getApiModule';
+import { DEMO_ACCOUNT_API_TOCKEN, DEMO_PROJECT_API_TOCKEN, DEMO_PROJECT_CODE } from '../../api/constants';
 
 //const HOUR = 1000 * 60 * 60;
+
+const projectApi = getApiModule('project', {
+  'x-whatap-pcode': DEMO_PROJECT_CODE,
+  'x-whatap-token': DEMO_PROJECT_API_TOCKEN,
+});
+const accountApi = getApiModule('account', {
+  'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
+});
 
 function Guide() {
   const [accountMeta, setAccountMeta] = useState();
@@ -10,10 +19,12 @@ function Guide() {
   const [spot, setSpot] = useState();
 
   useEffect(() => {
-    api.accountMeta('projects').then((result) => setAccountMeta(result));
-    api.spot('act_agent').then((result) => setSpot(result));
-    api.projectMeta('agents').then((result) => setProjectMeta(result));
-    api.series('project').then((result) => setSeries(result));
+    accountApi('api/json/projects').then((result) => setAccountMeta(result));
+    projectApi('api/act_agent').then((result) => setSpot(result));
+    projectApi('api/json/project').then((result) => setProjectMeta(result));
+    projectApi('api/json/project/{pcode}/members', {
+      pcode: DEMO_PROJECT_CODE,
+    }).then((result) => setSeries(result));
   }, []);
 
   return (
