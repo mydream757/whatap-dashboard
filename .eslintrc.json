@@ -26,7 +26,6 @@
     "object-property-newline": "error",
     "no-multiple-empty-lines": "error",
     "newline-per-chained-call": "error",
-    "multiline-ternary": "error",
     "react/react-in-jsx-scope": "warn",
     "react/jsx-no-target-blank": "warn"
   }
