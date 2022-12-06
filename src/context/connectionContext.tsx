@@ -1,22 +1,29 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
-import getApiModule from '../api/getApiModule';
 import { ApiCategoryKeys } from '../components/chart/constants';
 import { DEMO_ACCOUNT_API_TOCKEN } from '../api/constants';
+import getApiModule from '../api/getApiModule';
 
-export interface ConnectionResult<Data> {
-  data: { value: Data; time: number };
+export interface ConnectionResult<Data = number> {
+  value: Data;
+  time: number;
 }
 
 type ApiState = Partial<{
-  [key: string]: ConnectionResult<number>[];
+  [key: string]: ConnectionResult[];
 }>;
 
+interface QueryConnectionArgs<Param = { [key: string]: string | number }> {
+  pcode: number;
+  category: ApiCategoryKeys;
+  key: string;
+  updateData?: boolean;
+  params?: Param;
+  recurParams?: (args?: Param) => Param;
+  timeout?: number;
+}
+
 interface ConnectionContextReturn {
-  queryConnection: (
-    pcode: number,
-    category: ApiCategoryKeys,
-    key: string
-  ) => void;
+  queryConnection: (args: QueryConnectionArgs) => void;
   selectProject: (projectCode: number) => void;
   setApiTokenMap: (value: { [key: string]: string }) => void;
   datum: ApiState;
@@ -25,8 +32,8 @@ interface ConnectionContextReturn {
 }
 
 const ConnectionContext = React.createContext<ConnectionContextReturn>({
-  queryConnection: (pcode, category, key) => {
-    console.log(category, key);
+  queryConnection: (args) => {
+    console.log(args);
   },
   selectProject: (projectCode) => {
     console.log(projectCode);
@@ -41,14 +48,9 @@ const ConnectionContext = React.createContext<ConnectionContextReturn>({
   config: {},
 });
 
-type ConnectionStatus = {
-  key: string;
-  category: ApiCategoryKeys;
-};
-
 interface ConnectionState {
   projectCode?: number;
-  waits: ConnectionStatus[];
+  waits: QueryConnectionArgs[];
 }
 
 const MAX_PARALLEL_COUNT = 6;
@@ -74,7 +76,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         ...prevState,
         waits: prevState.waits.slice(1),
       }));
-      queryConnection(state.projectCode, next.category, next.key);
+      queryConnection(next);
     }
   }, [count.current, config, state]);
 
@@ -101,19 +103,14 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     }));
   };
 
-  const queryConnection = (
-    pcode: number,
-    category: ApiCategoryKeys,
-    key: string
-  ) => {
+  const queryConnection = (args: QueryConnectionArgs) => {
     if (!config || !state.projectCode || !config[state.projectCode]) {
       setState((prevState) => ({
         ...prevState,
         waits: [
           ...prevState.waits,
           {
-            category,
-            key,
+            ...args,
           },
         ],
       }));
@@ -122,7 +119,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     if (count.current < MAX_PARALLEL_COUNT) {
       count.current += 1;
       let header;
-      switch (category) {
+      switch (args.category) {
         case 'account':
           header = {
             'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
@@ -131,55 +128,61 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         case 'project':
         default:
           header = {
-            'x-whatap-token': config[pcode],
-            'x-whatap-pcode': pcode,
+            'x-whatap-token': config[args.pcode],
+            'x-whatap-pcode': args.pcode,
           };
           break;
       }
-      getApiModule(category, { ...header })(key)
+      getApiModule(args.category, { ...header })(args.key, args.params)
         .then((result) => {
-          setDatum((prevState) => ({
-            ...prevState,
-            [key]: [
-              ...(prevState[key] || []),
-              {
-                data: {
+          setDatum((prevState) => {
+            const prevValue = prevState[args.key];
+            return {
+              ...prevState,
+              [args.key]: [
+                ...(!args.updateData && prevValue ? prevValue : []),
+                {
                   value: result.data,
                   time: Date.now(),
                 },
-              },
-            ],
-          }));
+              ],
+            };
+          });
           count.current -= 1;
-          const timeout = setTimeout(
-            () => queryConnection(pcode, category, key),
-            5000
+          const t = setTimeout(
+            () =>
+              queryConnection({
+                ...args,
+                params: args.recurParams
+                  ? args.recurParams(args.params)
+                  : args.params,
+              }),
+            args.timeout || 5000
           );
-          timeouts.current.push(timeout);
+          timeouts.current.push(t);
         })
         .catch(() => {
           count.current -= 1;
           //TODO: casing error status
+          /*
           setState((prevState) => ({
             ...prevState,
             waits: [
               ...prevState.waits,
               {
-                category,
-                key,
+                ...args,
               },
             ],
-          }));
+          }));*/
         });
     } else {
-      console.log('queue push:', key);
+      console.log('queue push:', args);
       setState((prevState) => ({
         ...prevState,
         waits: [
           ...prevState.waits,
           {
-            category,
-            key,
+            ...args,
           },
         ],
       }));

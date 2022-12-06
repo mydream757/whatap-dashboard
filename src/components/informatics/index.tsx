@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { Card, Col, Row, Statistic } from 'antd';
+import { Col, Row, Space } from 'antd';
 
 type InformaticsData = {
   apiKey?: string;
@@ -14,16 +14,38 @@ interface InformaticsProps {
 
 export function Informatics({ datum }: InformaticsProps): ReactElement {
   return (
-    <Row gutter={8}>
+    <Space
+      style={{
+        width: '100%',
+      }}
+      size={4}
+      direction={'vertical'}
+    >
       {datum.map((data, index) => {
         return (
-          <Col key={`${data.title}-${index}`}>
-            <Card>
-              <Statistic title={data.title} value={data.value} />
-            </Card>
-          </Col>
+          <div
+            style={{
+              padding: '8px',
+              border: '1px solid #f0f0f0',
+              borderRadius: '4px',
+            }}
+            key={`${data.title}-${index}`}
+          >
+            <Row>
+              <Col flex={2}>{data.title}</Col>
+              <Col
+                style={{
+                  display: 'flex',
+                  justifyContent: 'end',
+                }}
+                flex={1}
+              >
+                {data.value}
+              </Col>
+            </Row>
+          </div>
         );
       })}
-    </Row>
+    </Space>
   );
 }

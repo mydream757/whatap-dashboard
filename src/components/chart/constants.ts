@@ -1,6 +1,7 @@
 // 필수적인 차트 타입.
 import { API_CATEGORIES } from '../../api/constants';
 import { ChartTypeRegistry } from 'chart.js';
+import { ConnectionResult } from '../../context/connectionContext';
 
 /* ## informatics chart ##
  *  지표 이름과 값을 단순 텍스트 형식으로 표시
@@ -8,9 +9,16 @@ import { ChartTypeRegistry } from 'chart.js';
  *  */
 
 export type ApiCategoryKeys = keyof typeof API_CATEGORIES;
-export type DataConfig<Category extends ApiCategoryKeys = ApiCategoryKeys> = {
+export type DataConfig<
+  Category extends ApiCategoryKeys = ApiCategoryKeys,
+  Params = { [key: string]: string | number }
+> = {
   apiCategory: Category;
   apiUrl: keyof typeof API_CATEGORIES[Category];
+  stack?: boolean;
+  params?: Params;
+  parseValue?: (response: unknown) => ConnectionResult[];
+  recurParams?: (args?: Params) => Params;
   dataType?: 'series' | 'active';
   backgroundColor?: string;
   description?: string;
@@ -21,13 +29,15 @@ export interface InformaticsDataConfig extends DataConfig {
   type: 'informatics';
 }
 
-export interface ChartDataConfig<Widget extends keyof ChartTypeRegistry>
-  extends DataConfig {
+export interface ChartDataConfig<
+  Widget extends keyof ChartTypeRegistry,
+  Category extends ApiCategoryKeys = ApiCategoryKeys
+> extends DataConfig<Category> {
   type?: Widget;
   options?: ChartTypeRegistry[Widget];
 }
 
 export type WidgetDataConfig =
-  | ChartDataConfig<'line'>
-  | ChartDataConfig<'bar'>
+  | ChartDataConfig<'line', 'project'>
+  | ChartDataConfig<'bar', 'project'>
   | InformaticsDataConfig;

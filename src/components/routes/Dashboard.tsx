@@ -3,92 +3,117 @@ import { Col, Layout, Row } from 'antd';
 import Widget, { WidgetProps } from '../widgets/Widget';
 import { useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
-import { WidgetDataConfig } from '../chart/constants';
 import { API_CATEGORIES } from '../../api/constants';
 import { format } from 'date-fns';
 
-export function dashboardLoader({ params }: any) {
+export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;
 }
 
 const widgetList: WidgetProps[] = [
   {
+    colSpan: 6,
     header: {
-      title: 'AGENTS',
+      title: 'Active Status',
     },
     body: {
       type: 'informatics',
       dataConfigs: [
         {
-          title: 'Active agents',
+          stack: false,
+          title: '메서드',
+          apiCategory: 'project',
+          apiUrl: 'api/act_method',
+        },
+        {
+          stack: false,
+          title: '에이전트',
           apiCategory: 'project',
           apiUrl: 'api/act_agent',
         },
         {
-          title: 'Inactive agents',
+          stack: false,
+          title: 'DB 커넥션',
           apiCategory: 'project',
-          apiUrl: 'api/inact_agent',
+          apiUrl: 'api/act_dbc',
         },
-      ] as WidgetDataConfig[],
+        {
+          stack: false,
+          title: 'Sql',
+          apiCategory: 'project',
+          apiUrl: 'api/act_sql',
+        },
+        {
+          stack: false,
+          title: 'Http 호출',
+          apiCategory: 'project',
+          apiUrl: 'api/act_httpc',
+        },
+        {
+          stack: false,
+          title: '소켓',
+          apiCategory: 'project',
+          apiUrl: 'api/act_socket',
+        },
+      ],
     },
   },
   {
+    colSpan: 6,
     header: {
-      title: 'HOST',
+      title: 'Transaction',
     },
     body: {
       type: 'informatics',
       dataConfigs: [
         {
-          title: 'hosts',
-          apiCategory: 'project',
-          apiUrl: 'api/host',
-        },
-        {
-          title: 'SUM: cpu cores',
-          apiCategory: 'project',
-          apiUrl: 'api/cpucore',
-        },
-      ] as WidgetDataConfig[],
-    },
-  },
-  {
-    header: {
-      title: 'TRANSACTION',
-    },
-    body: {
-      type: 'informatics',
-      dataConfigs: [
-        {
-          title: 'Transactions',
+          stack: false,
+          title: '총 트랜잭션',
           apiCategory: 'project',
           apiUrl: 'api/txcount',
         },
         {
-          title: 'tps',
+          stack: false,
+          title: '활성 트랜잭션',
+          apiCategory: 'project',
+          apiUrl: 'api/actx',
+        },
+        {
+          stack: false,
+          title: '초당 트랜잭션',
           apiCategory: 'project',
           apiUrl: 'api/tps',
         },
-      ] as WidgetDataConfig[],
+      ],
     },
   },
   {
+    colSpan: 12,
     header: {
-      title: API_CATEGORIES['project']['api/rtime'],
+      title: '최근 사용자 (5분)',
     },
     body: {
       type: 'line',
       labels: [],
+      options: {
+        scales: {
+          y: {
+            min: 0,
+            suggestedMax: 800,
+          },
+        },
+      },
       dataConfigs: [
         {
-          title: 'rtime',
+          title: 'recent',
           apiCategory: 'project',
-          apiUrl: 'api/rtime',
+          apiUrl: 'api/user',
         },
-      ] as WidgetDataConfig[],
+      ],
     },
   },
   {
+    colSpan: 12,
     header: {
       title: 'DB Connection',
     },
@@ -101,19 +126,35 @@ const widgetList: WidgetProps[] = [
           apiCategory: 'project',
           apiUrl: 'api/dbc_count',
         },
+      ],
+    },
+  },
+  {
+    colSpan: 12,
+    header: {
+      title: 'Exception',
+    },
+    body: {
+      type: 'line',
+      labels: [],
+      dataConfigs: [
         {
-          title: API_CATEGORIES['project']['api/dbc_active'],
+          stack: false,
+          title: API_CATEGORIES['project']['api/dbc_count'],
           apiCategory: 'project',
-          backgroundColor: 'rgb(89, 209, 65)',
-          apiUrl: 'api/dbc_active',
+          apiUrl: 'api/json/exception/{stime}/{etime}',
+          params: {
+            etime: Date.now(),
+            stime: Date.now() - 1000 * 60,
+          },
+          recurParams: (args) => {
+            return {
+              stime: ((args?.stime as number) || 0) + 1000 * 5,
+              etime: ((args?.etime as number) || 0) + 1000 * 5,
+            };
+          },
         },
-        {
-          title: API_CATEGORIES['project']['api/dbc_idle'],
-          apiCategory: 'project',
-          backgroundColor: 'rgb(190, 23, 55)',
-          apiUrl: 'api/dbc_idle',
-        },
-      ] as WidgetDataConfig[],
+      ],
     },
   },
 ];
@@ -129,7 +170,15 @@ export default function Dashboard(): ReactElement {
         await selectProject(Number(pCode));
         widgetList.forEach((config) => {
           config.body.dataConfigs.forEach((config) => {
-            queryConnection(Number(pCode), config.apiCategory, config.apiUrl);
+            queryConnection({
+              pcode: Number(pCode),
+              category: config.apiCategory,
+              key: config.apiUrl,
+              timeout: 5000,
+              params: config.params,
+              recurParams: config.recurParams,
+              updateData: config.stack,
+            });
           });
         });
       }
@@ -149,8 +198,8 @@ export default function Dashboard(): ReactElement {
   return (
     <Layout style={{ padding: '8px' }}>
       <Row gutter={[8, 8]} wrap>
-        {widgetList.map(({ header, body }, index) => (
-          <Col key={`${pCode}-${index}`}>
+        {widgetList.map(({ colSpan, header, body }, index) => (
+          <Col span={colSpan} key={`${pCode}-${index}`}>
             <Widget
               key={`${pCode}-${index}`}
               header={header}
