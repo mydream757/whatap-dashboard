@@ -50,11 +50,24 @@ ChartJS.register(
 };
  */
 
-const REAL_TIME_DATA_POOL = 15;
-export const LINE_DEFAULT_BORDER_COLOR = 'rgb(75, 192, 192)';
+export const LINE_DEFAULT_BORDER_COLOR = 'rgb(8,187,164)';
 export default function WhatapChart({
   data,
   ...props
 }: ChartProps): ReactElement {
-  return <Chart {...props} updateMode={'active'} data={data} />;
+  return (
+    <Chart
+      {...props}
+      options={{
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+        ...props.options,
+      }}
+      updateMode={'active'}
+      data={data}
+    />
+  );
 }

@@ -38,6 +38,7 @@ const SERIES_REGISTRY = {
   'api/json/transaction/{stime}/{etime}': '트랜잭션',
   'api/json/visitor_5m/{stime}/{etime}': '액티브 사용자 (5분 단위)',
   'api/json/visitor_h/{stime}/{etime}': '액티브 사용자 (1시간 단위)',
+  'api/json/fullgclog/{stime}/{etime}': 'Full GC 로그',
 } as const;
 
 const META_REGISTRY = {

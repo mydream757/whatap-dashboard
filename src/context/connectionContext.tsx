@@ -2,9 +2,11 @@ import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { ApiCategoryKeys } from '../components/chart/constants';
 import { DEMO_ACCOUNT_API_TOCKEN } from '../api/constants';
 import getApiModule from '../api/getApiModule';
+import { format } from 'date-fns';
 
 export interface ConnectionResult<Data = number> {
   value: Data;
+  label?: string | number;
   time: number;
 }
 
@@ -16,6 +18,7 @@ interface QueryConnectionArgs<Param = { [key: string]: string | number }> {
   pcode: number;
   category: ApiCategoryKeys;
   key: string;
+  responseParser?: (response: any) => ConnectionResult[];
   updateData?: boolean;
   params?: Param;
   recurParams?: (args?: Param) => Param;
@@ -50,47 +53,53 @@ const ConnectionContext = React.createContext<ConnectionContextReturn>({
 
 interface ConnectionState {
   projectCode?: number;
-  waits: QueryConnectionArgs[];
 }
 
-const MAX_PARALLEL_COUNT = 6;
+const defaultResponseParser = (response: number) => {
+  return {
+    value: response,
+    label: format(new Date(Date.now()), 'mm:ss'),
+    time: Date.now(),
+  };
+};
+
+const DEFAULT_MAX_PARALLEL_COUNT = 20;
 
 function ConnectionProvider({ children }: { children?: ReactNode }) {
   const [config, setConfig] = useState<Record<number, string>>({});
-  const [state, setState] = useState<ConnectionState>({
-    waits: [],
-  });
+  const [state, setState] = useState<ConnectionState>({});
+  const maxCount = useRef<number>(DEFAULT_MAX_PARALLEL_COUNT);
   const count = useRef<number>(0);
   const timeouts = useRef<NodeJS.Timeout[]>([]);
+  const waits = useRef<QueryConnectionArgs[]>([]);
   const callbacks = useRef<{ [key: string]: () => void }>({});
   const [datum, setDatum] = useState<ApiState>({});
 
   useEffect(() => {
     if (
       state.projectCode &&
-      count.current < MAX_PARALLEL_COUNT &&
-      state.waits.length
+      count.current < maxCount.current &&
+      waits.current.length
     ) {
-      const next = state.waits[0];
-      setState((prevState) => ({
-        ...prevState,
-        waits: prevState.waits.slice(1),
-      }));
-      queryConnection(next);
+      const next = waits.current.shift();
+
+      if (next) {
+        queryConnection(next);
+      }
     }
-  }, [count.current, config, state]);
+  }, [config, waits.current.length, state]);
 
   const setApiTokenMap = (value: { [key: number]: string }) => {
     setConfig(value);
   };
 
   const clear = () => {
-    setState(() => ({ waits: [] }));
     timeouts.current.forEach((timeout) => {
       clearTimeout(timeout);
     });
     timeouts.current = [];
     callbacks.current = {};
+    waits.current = [];
 
     setDatum({});
   };
@@ -105,18 +114,10 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
   const queryConnection = (args: QueryConnectionArgs) => {
     if (!config || !state.projectCode || !config[state.projectCode]) {
-      setState((prevState) => ({
-        ...prevState,
-        waits: [
-          ...prevState.waits,
-          {
-            ...args,
-          },
-        ],
-      }));
+      waits.current.push(args);
       return;
     }
-    if (count.current < MAX_PARALLEL_COUNT) {
+    if (count.current < maxCount.current) {
       count.current += 1;
       let header;
       switch (args.category) {
@@ -135,57 +136,40 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
       }
       getApiModule(args.category, { ...header })(args.key, args.params)
         .then((result) => {
+          count.current -= 1;
           setDatum((prevState) => {
             const prevValue = prevState[args.key];
             return {
               ...prevState,
-              [args.key]: [
-                ...(!args.updateData && prevValue ? prevValue : []),
-                {
-                  value: result.data,
-                  time: Date.now(),
-                },
-              ],
+              [args.key]: args?.responseParser
+                ? args?.responseParser(result.data)
+                : [
+                    ...(!args.updateData && prevValue ? prevValue : []),
+                    defaultResponseParser(result.data),
+                  ],
             };
           });
-          count.current -= 1;
-          const t = setTimeout(
-            () =>
-              queryConnection({
-                ...args,
-                params: args.recurParams
-                  ? args.recurParams(args.params)
-                  : args.params,
-              }),
-            args.timeout || 5000
-          );
+          const t = setTimeout(() => {
+            queryConnection({
+              ...args,
+              params: args.recurParams
+                ? args.recurParams(args.params)
+                : args.params,
+            });
+          }, args.timeout || 5000);
           timeouts.current.push(t);
         })
-        .catch(() => {
+        .catch((error) => {
           count.current -= 1;
           //TODO: casing error status
-          /*
-          setState((prevState) => ({
-            ...prevState,
-            waits: [
-              ...prevState.waits,
-              {
-                ...args,
-              },
-            ],
-          }));*/
+          if (error.status === 429) {
+            console.log('too many request: ', error);
+            waits.current.push(args);
+          }
         });
     } else {
       console.log('queue push:', args);
-      setState((prevState) => ({
-        ...prevState,
-        waits: [
-          ...prevState.waits,
-          {
-            ...args,
-          },
-        ],
-      }));
+      waits.current.push(args);
     }
   };
 

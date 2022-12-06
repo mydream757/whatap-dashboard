@@ -17,7 +17,7 @@ export type DataConfig<
   apiUrl: keyof typeof API_CATEGORIES[Category];
   stack?: boolean;
   params?: Params;
-  parseValue?: (response: unknown) => ConnectionResult[];
+  responseParser?: (response: any) => ConnectionResult[];
   recurParams?: (args?: Params) => Params;
   dataType?: 'series' | 'active';
   backgroundColor?: string;

@@ -1,4 +1,4 @@
-import React, { ReactElement, useMemo } from 'react';
+import React, { ReactElement } from 'react';
 import { Col, Row } from 'antd';
 import IconButton, { IconButtonProps } from '../iconButton/IconButton';
 import WhatapChart, { LINE_DEFAULT_BORDER_COLOR } from '../chart';
@@ -48,12 +48,17 @@ type WidgetType = 'informatics' | 'line' | 'bar';
 
 interface BodyProps {
   type: WidgetType;
-  labels?: string[];
+  labelKey?: string;
   options?: ChartOptions;
   dataConfigs: WidgetDataConfig[];
 }
 
-function Body({ type, dataConfigs, options, labels }: BodyProps): ReactElement {
+function Body({
+  type,
+  dataConfigs,
+  labelKey,
+  options,
+}: BodyProps): ReactElement {
   const { datum } = useConnection();
 
   switch (type) {
@@ -62,34 +67,29 @@ function Body({ type, dataConfigs, options, labels }: BodyProps): ReactElement {
       return (
         <WhatapChart
           type={type}
-          options={{
-            plugins: {
-              legend: {
-                display: false,
-              },
-            },
-            ...options,
-          }}
+          options={options}
           data={{
-            labels,
-            datasets: useMemo(
-              () =>
-                dataConfigs.map((config) => {
-                  return {
-                    type: config.type as ChartType,
-                    borderRadius: 0.5,
-                    fill: true,
-                    backgroundColor:
-                      config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
-                    borderColor:
-                      config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
-                    data: (datum[config.apiUrl] || []).map(
-                      (result) => result?.value
-                    ) as number[],
-                  };
-                }),
-              [labels]
-            ),
+            labels: labelKey
+              ? (datum[labelKey] || []).map((data) => data.label)
+              : [],
+            datasets: dataConfigs.map((config) => {
+              return {
+                type: config.type as ChartType,
+                pointRadius: 1.5,
+                pointHoverRadius: 1.5,
+                pointStyle: 'circle',
+                pointBorderColor: 'rgba(107,119,119,0.69)',
+                pointBackgroundColor: 'rgba(107,119,119,0.69)',
+                pointHoverBorderColor: 'rgba(107,119,119,0.69)',
+                backgroundColor:
+                  config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
+                borderColor:
+                  config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
+                data: (datum[config.apiUrl] || []).map(
+                  (result) => result?.value
+                ) as number[],
+              };
+            }),
           }}
         />
       );
@@ -97,17 +97,13 @@ function Body({ type, dataConfigs, options, labels }: BodyProps): ReactElement {
     default:
       return (
         <Informatics
-          datum={useMemo(
-            () =>
-              dataConfigs.map((config) => {
-                const result = datum[config.apiUrl];
-                return {
-                  title: config.title,
-                  value: result?.length ? result[result.length - 1].value : 0,
-                };
-              }),
-            [labels]
-          )}
+          datum={dataConfigs.map((config) => {
+            const result = datum[config.apiUrl];
+            return {
+              title: config.title,
+              value: result?.length ? result[result.length - 1].value : 0,
+            };
+          })}
         />
       );
   }

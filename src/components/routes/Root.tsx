@@ -3,7 +3,7 @@ import { FolderOutlined } from '@ant-design/icons';
 
 import { Layout, Menu } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
-import { Link, Outlet, useLoaderData } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLoaderData } from 'react-router-dom';
 import { useConnection } from '../../context/connectionContext';
 import getApiModule from '../../api/getApiModule';
 import { DEMO_ACCOUNT_API_TOCKEN } from '../../api/constants';
@@ -44,9 +44,9 @@ const getMenuItem = ({
   return {
     key: `${projectCode}`,
     label: (
-      <Link onClick={onClick} to={`dashboard/${projectCode}`}>
+      <NavLink onClick={onClick} to={`dashboard/${projectCode}`}>
         ${projectName}
-      </Link>
+      </NavLink>
     ),
   };
 };

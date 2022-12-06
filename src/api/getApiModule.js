@@ -23,7 +23,14 @@ const getOpenApi = (category, header) => (apiKey, param) =>
     fetch(getPath(url, param), {
       headers: { ...header },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        switch (response.status) {
+          case 200:
+            return response.json();
+          default:
+            throw response;
+        }
+      })
       .then((data) => ({
         apiKey,
         name,
