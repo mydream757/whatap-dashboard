@@ -5,6 +5,9 @@ import { useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
 import { API_CATEGORIES } from '../../api/constants';
 import { format, startOfToday } from 'date-fns';
+import Widget from '../widget';
+import { WidgetProps } from '../widget/Widget';
+import GridLayout from '../layout';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;
