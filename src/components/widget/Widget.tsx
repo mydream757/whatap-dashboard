@@ -3,7 +3,6 @@ import Header, { HeaderProps } from './Header';
 import Body, { BodyProps } from './Body';
 
 export interface WidgetProps {
-  colSpan?: number;
   header?: HeaderProps;
   body: BodyProps;
 }

@@ -1,21 +1,20 @@
 import React, { ReactElement, useEffect } from 'react';
-import { Col, Layout, Row } from 'antd';
-import Widget, { WidgetProps } from '../widgets/Widget';
+import { Layout } from 'antd';
 import { useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
 import { API_CATEGORIES } from '../../api/constants';
 import { format, startOfToday } from 'date-fns';
 import Widget from '../widget';
 import { WidgetProps } from '../widget/Widget';
-import GridLayout from '../layout';
+import GridContainer from '../containers';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;
 }
 
+const colSpans = [6, 6, 12, 12, 12, 12];
 const widgetList: WidgetProps[] = [
   {
-    colSpan: 6,
     header: {
       title: 'Active Status',
     },
@@ -62,7 +61,6 @@ const widgetList: WidgetProps[] = [
     },
   },
   {
-    colSpan: 6,
     header: {
       title: 'Transaction',
     },
@@ -91,7 +89,6 @@ const widgetList: WidgetProps[] = [
     },
   },
   {
-    colSpan: 12,
     header: {
       title: 'Exception',
     },
@@ -120,7 +117,6 @@ const widgetList: WidgetProps[] = [
   },
 
   {
-    colSpan: 12,
     header: {
       title: '국가 별 Client',
     },
@@ -178,7 +174,6 @@ const widgetList: WidgetProps[] = [
     },
   },
   {
-    colSpan: 12,
     header: {
       title: '활성 사용자 (5분 단위)',
     },
@@ -221,7 +216,6 @@ const widgetList: WidgetProps[] = [
     },
   },
   {
-    colSpan: 12,
     header: {
       title: '활성 사용자 (1시간 단위)',
     },
@@ -295,13 +289,11 @@ export default function Dashboard(): ReactElement {
 
   return (
     <Layout style={{ padding: '8px' }}>
-      <Row gutter={[8, 8]} wrap>
-        {widgetList.map(({ colSpan, header, body }, index) => (
-          <Col span={colSpan} key={`${pCode}-${index}`}>
-            <Widget key={`${pCode}-${index}`} header={header} body={body} />
-          </Col>
+      <GridContainer colSpan={colSpans}>
+        {widgetList.map(({ header, body }, index) => (
+          <Widget key={`${pCode}-${index}`} header={header} body={body} />
         ))}
-      </Row>
+      </GridContainer>
     </Layout>
   );
 }
