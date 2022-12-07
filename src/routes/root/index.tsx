@@ -1,9 +1,9 @@
 import React, { ReactElement, useEffect } from 'react';
-import { useConnection } from '../../../context/connectionContext';
+import { useConnection } from '../../context/connectionContext';
 import { NavLink, useLoaderData } from 'react-router-dom';
 import { Layout } from 'antd';
-import getApiModule from '../../../api/getApiModule';
-import { DEMO_ACCOUNT_API_TOCKEN } from '../../../api/constants';
+import getApiModule from '../../api/getApiModule';
+import { DEMO_ACCOUNT_API_TOCKEN } from '../../api/constants';
 import Sidebar from './Sidebar';
 import DashboardHeader from './Header';
 import DashboardContent from './Content';

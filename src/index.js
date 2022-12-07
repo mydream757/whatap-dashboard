@@ -4,10 +4,10 @@ import './styles/index.css';
 
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Dashboard, Guide, Root } from './components/routes';
+import { Dashboard, Guide, Root } from './routes';
 import { ConnectionProvider } from './context/connectionContext';
-import { dashboardLoader } from './components/routes/Dashboard';
-import { rootLoader } from './components/routes/root';
+import { dashboardLoader } from './routes/outlets/Dashboard';
+import { rootLoader } from './routes/root';
 
 const router = createBrowserRouter([
   {

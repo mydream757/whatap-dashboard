@@ -12,7 +12,7 @@ const accountApi = getApiModule('account', {
   'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
 });
 
-function Guide() {
+export default function Guide() {
   const [accountMeta, setAccountMeta] = useState();
   const [series, setSeries] = useState();
   const [projectMeta, setProjectMeta] = useState();
@@ -52,5 +52,3 @@ function Guide() {
     </div>
   );
 }
-
-export default Guide;

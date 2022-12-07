@@ -4,9 +4,9 @@ import { useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
 import { API_CATEGORIES } from '../../api/constants';
 import { format, startOfToday } from 'date-fns';
-import Widget from '../widget';
-import { WidgetProps } from '../widget/Widget';
-import GridContainer from '../containers';
+import Widget from '../../components/widget';
+import { WidgetProps } from '../../components/widget/Widget';
+import GridContainer from '../../components/containers';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;
