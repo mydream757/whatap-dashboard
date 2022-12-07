@@ -31,7 +31,7 @@ export interface ChartDataConfig<
 }
 
 export type OpenApiHeader = {
-  'x-whatap-pcode': string;
+  'x-whatap-pcode'?: string;
   'x-whatap-token': string;
 };
 export type ApiCategoryKeys = keyof typeof API_CATEGORIES;
