@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { useConnection } from '../../context/connectionContext';
+import { DataRecord } from '../../context/connectionContext';
 import WhatapChart, { LINE_DEFAULT_BORDER_COLOR } from '../chart';
 import { ChartOptions, ChartType } from 'chart.js';
 import { Informatics } from '../informatics';
@@ -12,21 +12,23 @@ export type WidgetDataConfig =
   | ChartDataConfig<'bar', 'project'>
   | InformaticsDataConfig;
 
+type Label = string | number;
+
 export interface BodyProps {
   type: WidgetType;
-  labelKey?: string;
+  labels?: Label[];
+  chartRecord?: DataRecord;
   options?: ChartOptions;
   dataConfigs: WidgetDataConfig[];
 }
 
 export default function Body({
   type,
+  chartRecord = {},
   dataConfigs,
-  labelKey,
+  labels,
   options,
 }: BodyProps): ReactElement {
-  const { datum } = useConnection();
-
   switch (type) {
     case 'bar':
     case 'line':
@@ -35,9 +37,7 @@ export default function Body({
           type={type}
           options={options}
           data={{
-            labels: labelKey
-              ? (datum[labelKey] || []).map((data) => data.label)
-              : [],
+            labels: labels || [],
             datasets: dataConfigs.map((config) => {
               return {
                 type: config.type as ChartType,
@@ -51,7 +51,7 @@ export default function Body({
                   config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
                 borderColor:
                   config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
-                data: (datum[config.apiUrl] || []).map(
+                data: (chartRecord[config.apiUrl] || []).map(
                   (result) => result?.value
                 ) as number[],
               };
@@ -64,7 +64,7 @@ export default function Body({
       return (
         <Informatics
           datum={dataConfigs.map((config) => {
-            const result = datum[config.apiUrl];
+            const result = chartRecord[config.apiUrl];
             return {
               title: config.title,
               value: result?.length ? result[result.length - 1].value : 0,

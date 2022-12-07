@@ -10,7 +10,7 @@ export interface ConnectionResult<Data = number> {
   time: number;
 }
 
-type ApiState = Partial<{
+export type DataRecord = Partial<{
   [key: string]: ConnectionResult[];
 }>;
 
@@ -29,7 +29,7 @@ interface ConnectionContextReturn {
   queryConnection: (args: QueryConnectionArgs) => void;
   selectProject: (projectCode: number) => void;
   setApiTokenMap: (value: { [key: string]: string }) => void;
-  datum: ApiState;
+  datum: DataRecord;
   clear: () => void;
   config: Record<number, string>;
 }
@@ -73,7 +73,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   const timeouts = useRef<NodeJS.Timeout[]>([]);
   const waits = useRef<QueryConnectionArgs[]>([]);
   const callbacks = useRef<{ [key: string]: () => void }>({});
-  const [datum, setDatum] = useState<ApiState>({});
+  const [datum, setDatum] = useState<DataRecord>({});
 
   useEffect(() => {
     if (

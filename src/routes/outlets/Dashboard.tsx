@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect } from 'react';
 import { Layout } from 'antd';
-import { useConnection } from '../../context/connectionContext';
+import { DataRecord, useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
 import { format, startOfToday } from 'date-fns';
 import Widget from '../../components/widget';
@@ -13,7 +13,7 @@ export function dashboardLoader({ params }: { params: { pcode: string } }) {
 }
 
 const colSpans = [6, 6, 12, 12, 12, 12];
-const widgetList: WidgetProps[] = [
+const widgetList: (WidgetProps & { labelKey?: string })[] = [
   {
     header: {
       title: 'Active Status',
@@ -89,12 +89,12 @@ const widgetList: WidgetProps[] = [
     },
   },
   {
+    labelKey: 'api/json/exception/{stime}/{etime}',
     header: {
       title: 'Exception',
     },
     body: {
       type: 'line',
-      labelKey: 'api/json/exception/{stime}/{etime}',
       dataConfigs: [
         {
           stack: false,
@@ -117,12 +117,12 @@ const widgetList: WidgetProps[] = [
   },
 
   {
+    labelKey: 'api/json/remote/{stime}/{etime}',
     header: {
       title: '국가 별 Client',
     },
     body: {
       type: 'bar',
-      labelKey: 'api/json/remote/{stime}/{etime}',
       dataConfigs: [
         {
           stack: false,
@@ -174,12 +174,12 @@ const widgetList: WidgetProps[] = [
     },
   },
   {
+    labelKey: 'api/json/visitor_5m/{stime}/{etime}',
     header: {
       title: '활성 사용자 (5분 단위)',
     },
     body: {
       type: 'line',
-      labelKey: 'api/json/visitor_5m/{stime}/{etime}',
       dataConfigs: [
         {
           stack: false,
@@ -216,12 +216,12 @@ const widgetList: WidgetProps[] = [
     },
   },
   {
+    labelKey: 'api/json/visitor_h/{stime}/{etime}',
     header: {
       title: '활성 사용자 (1시간 단위)',
     },
     body: {
       type: 'line',
-      labelKey: 'api/json/visitor_h/{stime}/{etime}',
       dataConfigs: [
         {
           stack: false,
@@ -261,7 +261,8 @@ const widgetList: WidgetProps[] = [
 
 export default function Dashboard(): ReactElement {
   const pCode = useLoaderData();
-  const { selectProject, config, clear, queryConnection } = useConnection();
+  const { selectProject, config, clear, queryConnection, datum } =
+    useConnection();
 
   useEffect(() => {
     if (typeof Number(pCode) === 'number' && config[Number(pCode)]) {
@@ -290,9 +291,27 @@ export default function Dashboard(): ReactElement {
   return (
     <Layout style={{ padding: '8px' }}>
       <GridContainer colSpan={colSpans}>
-        {widgetList.map(({ header, body }, index) => (
-          <Widget key={`${pCode}-${index}`} header={header} body={body} />
-        ))}
+        {widgetList.map(({ header, body, labelKey }, index) => {
+          const labels = labelKey
+            ? (datum[labelKey] || []).map((data) => data.label || data.time)
+            : [];
+          const chartRecord: DataRecord = {};
+          body.dataConfigs.forEach((config) => {
+            chartRecord[config.apiUrl] = datum[config.apiUrl];
+          });
+
+          return (
+            <Widget
+              key={`${pCode}-${index}`}
+              header={header}
+              body={{
+                ...body,
+                labels,
+                chartRecord,
+              }}
+            />
+          );
+        })}
       </GridContainer>
     </Layout>
   );
