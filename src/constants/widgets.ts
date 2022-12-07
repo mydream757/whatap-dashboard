@@ -206,6 +206,40 @@ const WidgetConfig: WidgetListItemRegistry = {
       ],
     },
   },
+  activeThread: {
+    labelKey: 'api/threadpool_active',
+    header: {
+      title: '활성 쓰레드 수',
+    },
+    body: {
+      type: 'line',
+      dataConfigs: [
+        {
+          stack: true,
+          title: API_CATEGORIES['project']['api/threadpool_active'],
+          apiCategory: 'project',
+          apiUrl: 'api/threadpool_active',
+        },
+      ],
+    },
+  },
+  queueingThread: {
+    labelKey: 'api/threadpool_queue',
+    header: {
+      title: '큐잉 스레드 수',
+    },
+    body: {
+      type: 'line',
+      dataConfigs: [
+        {
+          stack: true,
+          title: API_CATEGORIES['project']['api/threadpool_queue'],
+          apiCategory: 'project',
+          apiUrl: 'api/threadpool_queue',
+        },
+      ],
+    },
+  },
 };
 
 export default WidgetConfig;

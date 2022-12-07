@@ -4,20 +4,22 @@ import { DataRecord, useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
 import Widget from '../../components/widget';
 import GridContainer from '../../components/containers';
-import WidgetConfig, { WidgetListItem } from '../../constants/widgets';
+import WidgetConfig from '../../constants/widgets';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;
 }
 
-const colSpans = [6, 6, 12, 12, 12, 12];
-const initialList: WidgetListItem[] = [
-  WidgetConfig['activeStatus'],
-  WidgetConfig['transaction'],
-  WidgetConfig['exception'],
-  WidgetConfig['clientIP'],
-  WidgetConfig['activeUsers5m'],
-  WidgetConfig['activeUsers1h'],
+const colSpans = [6, 6, 12, 12, 12, 12, 12, 12];
+const initialList: (keyof typeof WidgetConfig)[] = [
+  'activeStatus',
+  'transaction',
+  'exception',
+  'clientIP',
+  'activeUsers5m',
+  'activeUsers1h',
+  'activeThread',
+  'queueingThread',
 ];
 
 export default function Dashboard(): ReactElement {
@@ -25,7 +27,9 @@ export default function Dashboard(): ReactElement {
   const { selectProject, config, clear, queryConnection, datum } =
     useConnection();
 
-  const [widgetList] = useState(initialList);
+  const [widgetList] = useState(() => {
+    return initialList.map((key) => WidgetConfig[key]);
+  });
 
   useEffect(() => {
     if (typeof Number(pCode) === 'number' && config[Number(pCode)]) {
