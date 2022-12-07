@@ -3,9 +3,14 @@ import { useConnection } from '../../context/connectionContext';
 import WhatapChart, { LINE_DEFAULT_BORDER_COLOR } from '../chart';
 import { ChartOptions, ChartType } from 'chart.js';
 import { Informatics } from '../informatics';
-import { WidgetDataConfig } from '../chart/constants';
+import { ChartDataConfig, InformaticsDataConfig } from '../../types';
 
 export type WidgetType = 'informatics' | 'line' | 'bar';
+
+export type WidgetDataConfig =
+  | ChartDataConfig<'line', 'project'>
+  | ChartDataConfig<'bar', 'project'>
+  | InformaticsDataConfig;
 
 export interface BodyProps {
   type: WidgetType;

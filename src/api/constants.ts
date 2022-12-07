@@ -2,10 +2,6 @@ const API_ROOT = 'https://api.whatap.io/open';
 const DEMO_ACCOUNT_API_TOCKEN = '1VQR6S6QY715GKROD4O8';
 const DEMO_PROJECT_API_TOCKEN = 'XGJHUSQZTI2AVIENWA27HI5V';
 const DEMO_PROJECT_CODE = 5490;
-const API_HEADER = {
-  'x-whatap-pcode': DEMO_PROJECT_CODE,
-  'x-whatap-token': DEMO_PROJECT_API_TOCKEN,
-};
 
 const SPOT_REGISTRY = {
   'api/act_agent': '활성화 상태의 에이전트 수',
@@ -66,5 +62,4 @@ export {
   DEMO_ACCOUNT_API_TOCKEN,
   DEMO_PROJECT_API_TOCKEN,
   DEMO_PROJECT_CODE,
-  API_HEADER,
 };

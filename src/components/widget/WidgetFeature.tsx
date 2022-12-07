@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import IconButton, { IconButtonProps } from '../iconButton/IconButton';
+import IconButton, { IconButtonProps } from '../iconButton';
 
 export type WidgetFeatureProps =
   | ({ type: 'iconButton' } & IconButtonProps)

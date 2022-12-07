@@ -2,11 +2,11 @@ import React, { ReactElement, useEffect } from 'react';
 import { Layout } from 'antd';
 import { useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
-import { API_CATEGORIES } from '../../api/constants';
 import { format, startOfToday } from 'date-fns';
 import Widget from '../../components/widget';
-import { WidgetProps } from '../../components/widget/Widget';
 import GridContainer from '../../components/containers';
+import { API_CATEGORIES } from '../../api/constants';
+import { WidgetProps } from '../../components/widget/Widget';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;

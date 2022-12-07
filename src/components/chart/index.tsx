@@ -51,10 +51,7 @@ ChartJS.register(
  */
 
 export const LINE_DEFAULT_BORDER_COLOR = 'rgb(8,187,164)';
-export default function WhatapChart({
-  data,
-  ...props
-}: ChartProps): ReactElement {
+export default function WhatapChart({ ...props }: ChartProps): ReactElement {
   return (
     <Chart
       {...props}
@@ -67,7 +64,6 @@ export default function WhatapChart({
         ...props.options,
       }}
       updateMode={'active'}
-      data={data}
     />
   );
 }

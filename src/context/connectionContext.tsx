@@ -1,8 +1,8 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
-import { ApiCategoryKeys } from '../components/chart/constants';
 import { DEMO_ACCOUNT_API_TOCKEN } from '../api/constants';
 import getApiModule from '../api/getApiModule';
 import { format } from 'date-fns';
+import { ApiCategoryKeys } from '../types';
 
 export interface ConnectionResult<Data = number> {
   value: Data;
