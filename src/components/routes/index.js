@@ -1,4 +1,4 @@
-import Root from './Root';
+import Root from './root';
 import Guide from './Guide';
 import Dashboard from './Dashboard';
 
