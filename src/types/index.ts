@@ -1,6 +1,6 @@
 import { API_CATEGORIES } from '../api/constants';
-import { ConnectionResult } from '../context/connectionContext';
 import { ChartTypeRegistry } from 'chart.js';
+import { ResponseParser } from '../parsers';
 
 export type DataConfig<
   Category extends ApiCategoryKeys = ApiCategoryKeys,
@@ -10,7 +10,7 @@ export type DataConfig<
   apiUrl: keyof typeof API_CATEGORIES[Category];
   stack?: boolean;
   params?: Params;
-  responseParser?: (response: any) => ConnectionResult[];
+  responseParser?: ResponseParser;
   recurParams?: (args?: Params) => Params;
   dataType?: 'series' | 'active';
   backgroundColor?: string;
