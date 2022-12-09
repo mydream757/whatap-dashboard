@@ -1,30 +1,71 @@
 import React, { ReactElement } from 'react';
 import { DataRecord } from '../../context/connectionContext';
-import WhatapChart, { LINE_DEFAULT_BORDER_COLOR } from '../chart';
-import { ChartOptions, ChartType } from 'chart.js';
+import WhatapChart, { getDatasetConfig } from '../chart';
+import { ChartOptions } from 'chart.js';
 import { Informatics } from '../informatics';
 import { ChartDataConfig, InformaticsDataConfig } from '../../types';
 
-export type WidgetType = 'informatics' | 'line' | 'bar';
-
-export type WidgetDataConfig =
-  | ChartDataConfig<'line', 'project'>
-  | ChartDataConfig<'bar', 'project'>
-  | InformaticsDataConfig;
+type ChartType = 'line' | 'bar';
 
 type Label = string | number;
 
-export interface BodyProps {
-  type: WidgetType;
-  labels?: Label[];
-  chartRecord?: DataRecord;
+export type BodyProps = (getWhatapChartDataArgs | getInformaticsDataArgs) & {
+  type: 'informatics' | ChartType;
   options?: ChartOptions;
-  dataConfigs: WidgetDataConfig[];
-}
+  labels?: Label[];
+};
+
+type getInformaticsDataArgs = {
+  dataConfigs: InformaticsDataConfig[];
+  dataRecord?: DataRecord;
+};
+
+const getInformaticsData = ({
+  dataConfigs,
+  dataRecord = {},
+}: getInformaticsDataArgs) => {
+  return dataConfigs.map((config) => {
+    const spots = dataRecord[config.apiUrl];
+    const length = spots?.length;
+
+    const latestValue = length ? spots[length - 1].value : 0;
+
+    return {
+      title: config.title,
+      value: latestValue,
+    };
+  });
+};
+
+type getWhatapChartDataArgs = {
+  type: ChartType;
+  dataConfigs: ChartDataConfig<ChartType, 'project'>[];
+  dataRecord?: DataRecord;
+  labels?: Label[];
+};
+const getWhatapChartData = ({
+  type,
+  dataConfigs,
+  dataRecord = {},
+  labels = [],
+}: getWhatapChartDataArgs) => {
+  return {
+    labels: labels || [],
+    datasets: dataConfigs.map(({ type: eachType, apiUrl, datasetOptions }) => {
+      return {
+        ...getDatasetConfig({
+          type: eachType || type,
+          datasetOptions,
+        }),
+        data: (dataRecord[apiUrl] || []).map((result) => result?.value),
+      };
+    }),
+  };
+};
 
 export default function Body({
   type,
-  chartRecord = {},
+  dataRecord,
   dataConfigs,
   labels,
   options,
@@ -36,39 +77,21 @@ export default function Body({
         <WhatapChart
           type={type}
           options={options}
-          data={{
-            labels: labels || [],
-            datasets: dataConfigs.map((config) => {
-              return {
-                type: config.type as ChartType,
-                pointRadius: 1.5,
-                pointHoverRadius: 1.5,
-                pointStyle: 'circle',
-                pointBorderColor: 'rgba(107,119,119,0.69)',
-                pointBackgroundColor: 'rgba(107,119,119,0.69)',
-                pointHoverBorderColor: 'rgba(107,119,119,0.69)',
-                backgroundColor:
-                  config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
-                borderColor:
-                  config.backgroundColor || LINE_DEFAULT_BORDER_COLOR,
-                data: (chartRecord[config.apiUrl] || []).map(
-                  (result) => result?.value
-                ) as number[],
-              };
-            }),
-          }}
+          data={getWhatapChartData({
+            type,
+            dataConfigs: dataConfigs as ChartDataConfig<ChartType, 'project'>[],
+            labels,
+            dataRecord,
+          })}
         />
       );
     case 'informatics':
     default:
       return (
         <Informatics
-          datum={dataConfigs.map((config) => {
-            const result = chartRecord[config.apiUrl];
-            return {
-              title: config.title,
-              value: result?.length ? result[result.length - 1].value : 0,
-            };
+          datum={getInformaticsData({
+            dataRecord,
+            dataConfigs,
           })}
         />
       );

@@ -1,10 +1,9 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { Layout } from 'antd';
-import { DataRecord, useConnection } from '../../context/connectionContext';
+import { useConnection } from '../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
-import Widget from '../../components/widget';
-import GridContainer from '../../components/containers';
 import WidgetConfig from '../../constants/widgets';
+import { WidgetList } from '../../components/list/WidgetList';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;
@@ -57,29 +56,7 @@ export default function Dashboard(): ReactElement {
 
   return (
     <Layout style={{ padding: '8px' }}>
-      <GridContainer colSpan={colSpans}>
-        {widgetList.map(({ header, body, labelKey }, index) => {
-          const labels = labelKey
-            ? (datum[labelKey] || []).map((data) => data.label || data.time)
-            : [];
-          const chartRecord: DataRecord = {};
-          body.dataConfigs.forEach((config) => {
-            chartRecord[config.apiUrl] = datum[config.apiUrl];
-          });
-
-          return (
-            <Widget
-              key={`${pCode}-${index}`}
-              header={header}
-              body={{
-                ...body,
-                labels,
-                chartRecord,
-              }}
-            />
-          );
-        })}
-      </GridContainer>
+      <WidgetList list={widgetList} datum={datum} colSpans={colSpans} />
     </Layout>
   );
 }

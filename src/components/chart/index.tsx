@@ -6,6 +6,8 @@ import {
   BarElement,
   CategoryScale,
   Chart as ChartJS,
+  ChartType,
+  ChartTypeRegistry,
   Legend,
   LinearScale,
   LineController,
@@ -13,6 +15,8 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js';
+import DESIGN from '../../system/design';
+import { ChartDataConfig } from '../../types';
 
 ChartJS.register(
   LinearScale,
@@ -26,31 +30,41 @@ ChartJS.register(
   BarController
 );
 
-/** Sample data
- const data = {
-  labels: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-  datasets: [
-    {
-      type: 'bar' as const,
-      label: 'My First Dataset',
-      data: [65, 59, 80, 81, 56, 55, 40],
-      fill: false,
-      borderColor: 'rgb(75, 192, 192)',
-      tension: 0.1,
+export const WhatapChartRegistry: {
+  [chartType in ChartType]+?: {
+    [options in keyof ChartTypeRegistry[chartType]]+?: Partial<
+      ChartTypeRegistry[chartType][options]
+    >;
+  };
+} = {
+  line: {
+    datasetOptions: {
+      pointHoverRadius: 1.5,
+      pointStyle: 'circle',
+      pointBorderColor: DESIGN.COLOR.mint['100'],
+      pointBackgroundColor: DESIGN.COLOR.mint['100'],
+      pointHoverBorderColor: DESIGN.COLOR.grey['100'],
     },
-    {
-      type: 'line' as const,
-      label: 'My First Dataset',
-      data: [65, 59, 80, 81, 56, 55, 40],
-      fill: false,
-      borderColor: 'rgb(75, 192, 192)',
-      tension: 0.1,
+  },
+  bar: {
+    datasetOptions: {
+      pointStyle: 'circle',
+      backgroundColor: DESIGN.COLOR.mint['100'],
+      borderColor: DESIGN.COLOR.mint['100'],
     },
-  ],
-};
- */
+  },
+} as const;
 
-export const LINE_DEFAULT_BORDER_COLOR = 'rgb(8,187,164)';
+export const getDatasetConfig = ({
+  type = 'line',
+  datasetOptions,
+}: Pick<ChartDataConfig<ChartType>, 'type' | 'datasetOptions'>) => {
+  return {
+    ...WhatapChartRegistry[type]?.datasetOptions,
+    ...datasetOptions,
+  } as Partial<ChartTypeRegistry[typeof type]['datasetOptions']>;
+};
+
 export default function WhatapChart({ ...props }: ChartProps): ReactElement {
   return (
     <Chart

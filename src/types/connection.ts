@@ -18,7 +18,7 @@ type ConnectionConfig<
   title: string;
 };
 
-interface InformaticsDataConfig extends ConnectionConfig {
+interface InformaticsDataConfig extends ConnectionConfig<'project'> {
   type: 'informatics';
 }
 
@@ -27,7 +27,7 @@ interface ChartDataConfig<
   Category extends ApiCategoryKeys = ApiCategoryKeys
 > extends ConnectionConfig<Category> {
   type?: Widget;
-  options?: ChartTypeRegistry[Widget];
+  datasetOptions?: Partial<ChartTypeRegistry[Widget]['datasetOptions']>;
 }
 
 type OpenApiHeader = {

@@ -7,7 +7,7 @@ export interface WidgetListItem extends WidgetProps {
   labelKey?: string;
 }
 
-type WidgetListItemRegistry = {
+export type WidgetListItemRegistry = {
   [key: string]: WidgetListItem;
 };
 
@@ -20,36 +20,42 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'informatics',
       dataConfigs: [
         {
+          type: 'informatics',
           stack: false,
           title: '메서드',
           apiCategory: 'project',
           apiUrl: 'api/act_method',
         },
         {
+          type: 'informatics',
           stack: false,
           title: '에이전트',
           apiCategory: 'project',
           apiUrl: 'api/act_agent',
         },
         {
+          type: 'informatics',
           stack: false,
           title: '5분 간 고유 사용자',
           apiCategory: 'project',
           apiUrl: 'api/user',
         },
         {
+          type: 'informatics',
           stack: false,
           title: 'Sql',
           apiCategory: 'project',
           apiUrl: 'api/act_sql',
         },
         {
+          type: 'informatics',
           stack: false,
           title: 'Http 호출',
           apiCategory: 'project',
           apiUrl: 'api/act_httpc',
         },
         {
+          type: 'informatics',
           stack: false,
           title: '소켓',
           apiCategory: 'project',
@@ -66,18 +72,21 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'informatics',
       dataConfigs: [
         {
+          type: 'informatics',
           stack: false,
           title: '총 트랜잭션',
           apiCategory: 'project',
           apiUrl: 'api/txcount',
         },
         {
+          type: 'informatics',
           stack: false,
           title: '활성 트랜잭션',
           apiCategory: 'project',
           apiUrl: 'api/actx',
         },
         {
+          type: 'informatics',
           stack: false,
           title: '초당 트랜잭션',
           apiCategory: 'project',
@@ -122,6 +131,7 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'bar',
       dataConfigs: [
         {
+          type: 'bar',
           stack: false,
           title: 'Client IP',
           apiCategory: 'project',
