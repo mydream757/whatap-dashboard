@@ -37,4 +37,4 @@
 * styles/ : 스타일 관련 애셋(ex- css)
 * types/ : 여러 유형의 모듈 관련 타입이 연계되는 타입 데이터
 
-![application_monitoring](./public/whatap-dashboard-1.png)
+![application_monitoring](public/images/whatap-dashboard-1.png)

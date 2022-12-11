@@ -32,7 +32,7 @@ export default function Sidebar({ menus }: SidebarProps): ReactElement {
       >
         <div className="logo" style={{ padding: '16px' }}>
           <Link to={'/'}>
-            <img width={'100%'} src={'/logo_header.svg'} />
+            <img width={'100%'} src={'/images/logo_header.svg'} />
           </Link>
         </div>
         <Menu
