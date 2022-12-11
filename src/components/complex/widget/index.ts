@@ -1,17 +1,17 @@
 import InternalWidget from './Widget';
-import Header from './Header';
-import Body from './Body';
+import WidgetHeader from './WidgetHeader';
+import WidgetBody from './WidgetBody';
 
 type MainComponent = typeof InternalWidget;
 
 interface WidgetComponent extends MainComponent {
-  Header: typeof Header;
-  Body: typeof Body;
+  Header: typeof WidgetHeader;
+  Body: typeof WidgetBody;
 }
 
 const Widget: WidgetComponent = Object.assign(InternalWidget, {
-  Header,
-  Body,
+  Header: WidgetHeader,
+  Body: WidgetBody,
 });
 
 export default Widget;

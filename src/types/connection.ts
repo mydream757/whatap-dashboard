@@ -1,6 +1,6 @@
 import { API_CATEGORIES } from '../api/constants';
 import { ChartTypeRegistry } from 'chart.js';
-import { ResponseParser } from '../parsers';
+import { ResponseParser } from '../constants/parsers';
 
 type ConnectionConfig<
   Category extends ApiCategoryKeys = ApiCategoryKeys,

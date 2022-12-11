@@ -1,6 +1,6 @@
-import { WidgetProps } from '../components/widget/Widget';
+import { WidgetProps } from '../components/complex/widget/Widget';
 import { API_CATEGORIES } from '../api/constants';
-import API_RESPONSE_PARSERS from '../parsers';
+import API_RESPONSE_PARSERS from './parsers';
 import { startOfToday } from 'date-fns';
 
 export interface WidgetListItem extends WidgetProps {

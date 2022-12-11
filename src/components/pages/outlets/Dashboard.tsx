@@ -1,9 +1,9 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { Layout } from 'antd';
-import { useConnection } from '../../context/connectionContext';
+import { useConnection } from '../../../context/connectionContext';
 import { useLoaderData } from 'react-router-dom';
-import WidgetConfig from '../../constants/widgets';
-import { WidgetList } from '../../components/list/WidgetList';
+import WidgetConfig from '../../../constants/widgets';
+import { WidgetList } from '../../list/WidgetList';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;

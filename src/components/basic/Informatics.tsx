@@ -12,7 +12,7 @@ interface InformaticsProps {
   datum: InformaticsData[];
 }
 
-export function Informatics({ datum }: InformaticsProps): ReactElement {
+export default function Informatics({ datum }: InformaticsProps): ReactElement {
   return (
     <Space
       style={{

@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
-import Header, { HeaderProps } from './Header';
-import Body, { BodyProps } from './Body';
+import Header, { HeaderProps } from './WidgetHeader';
+import Body, { BodyProps } from './WidgetBody';
 
 export interface WidgetProps {
   header?: HeaderProps;

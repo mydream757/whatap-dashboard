@@ -7,7 +7,10 @@ export interface HeaderProps {
   features?: WidgetFeatureProps[];
 }
 
-export default function Header({ title, features }: HeaderProps): ReactElement {
+export default function WidgetHeader({
+  title,
+  features,
+}: HeaderProps): ReactElement {
   return (
     <Row style={{ height: '24px' }} align={'middle'} justify={'space-between'}>
       <Col style={{ fontWeight: 'bold' }}>{title}</Col>

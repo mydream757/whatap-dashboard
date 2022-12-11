@@ -1,9 +1,9 @@
 import React, { ReactElement } from 'react';
-import { DataRecord } from '../../context/connectionContext';
-import WhatapChart, { getDatasetConfig } from '../chart';
+import { DataRecord } from '../../../context/connectionContext';
 import { ChartOptions } from 'chart.js';
-import { Informatics } from '../informatics';
-import { ChartDataConfig, InformaticsDataConfig } from '../../types';
+import { ChartDataConfig, InformaticsDataConfig } from '../../../types';
+import { Informatics, WhatapChart } from '../../basic';
+import { getDatasetConfig } from '../../basic/WhatapChart';
 
 type ChartType = 'line' | 'bar';
 
@@ -63,7 +63,7 @@ const getWhatapChartData = ({
   };
 };
 
-export default function Body({
+export default function WidgetBody({
   type,
   dataRecord,
   dataConfigs,

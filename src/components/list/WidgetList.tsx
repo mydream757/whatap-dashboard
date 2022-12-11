@@ -1,8 +1,8 @@
 import React, { ReactElement } from 'react';
 import { DataRecord } from '../../context/connectionContext';
-import Widget from '../widget';
+import Widget from '../complex/widget';
 import { WidgetListItem } from '../../constants/widgets';
-import GridContainer from '../containers';
+import GridContainer from '../container';
 
 interface WidgetListProps {
   datum: DataRecord;
