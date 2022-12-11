@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { DataRecord } from '../../context/connectionContext';
+import { DataRecord } from '../../contexts/connectionContext';
 import Widget from '../complex/widget';
 import { WidgetListItem } from '../../constants/widgets';
 import GridContainer from '../container';

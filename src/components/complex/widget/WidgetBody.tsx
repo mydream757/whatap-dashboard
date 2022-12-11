@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { DataRecord } from '../../../context/connectionContext';
+import { DataRecord } from '../../../contexts/connectionContext';
 import { ChartOptions } from 'chart.js';
 import { ChartDataConfig, InformaticsDataConfig } from '../../../types';
 import { Informatics, WhatapChart } from '../../basic';

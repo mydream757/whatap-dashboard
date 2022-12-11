@@ -1,6 +1,6 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { Layout } from 'antd';
-import { useConnection } from '../../../context/connectionContext';
+import { useConnection } from '../../../contexts/connectionContext';
 import { useLoaderData } from 'react-router-dom';
 import WidgetConfig from '../../../constants/widgets';
 import { WidgetList } from '../../list/WidgetList';
@@ -23,7 +23,7 @@ const initialList: (keyof typeof WidgetConfig)[] = [
 
 export default function Dashboard(): ReactElement {
   const pCode = useLoaderData();
-  const { selectProject, config, clear, queryConnection, datum } =
+  const { selectProject, apiTokenMap, clear, queryConnection, dataRecord } =
     useConnection();
 
   const [widgetList] = useState(() => {
@@ -31,7 +31,7 @@ export default function Dashboard(): ReactElement {
   });
 
   useEffect(() => {
-    if (typeof Number(pCode) === 'number' && config[Number(pCode)]) {
+    if (typeof Number(pCode) === 'number' && apiTokenMap[Number(pCode)]) {
       selectProject(Number(pCode));
       widgetList.forEach((config) => {
         config.body.dataConfigs.forEach((config) => {
@@ -52,11 +52,11 @@ export default function Dashboard(): ReactElement {
     return () => {
       clear();
     };
-  }, [pCode, config, widgetList]);
+  }, [pCode, apiTokenMap, widgetList]);
 
   return (
     <Layout style={{ padding: '8px' }}>
-      <WidgetList list={widgetList} datum={datum} colSpans={colSpans} />
+      <WidgetList list={widgetList} datum={dataRecord} colSpans={colSpans} />
     </Layout>
   );
 }

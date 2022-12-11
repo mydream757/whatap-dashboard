@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './styles/index.css';
+import './style/index.css';
 
 import reportWebVitals from './reportWebVitals';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Dashboard, Guide, Root } from './components/pages';
-import { ConnectionProvider } from './context/connectionContext';
+import { ConnectionProvider } from './contexts/connectionContext';
 import { dashboardLoader } from './components/pages/outlets/Dashboard';
 import { rootLoader } from './components/pages/root';
 

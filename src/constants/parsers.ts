@@ -1,4 +1,4 @@
-import { ConnectionResult } from '../context/connectionContext';
+import { ConnectionResult } from '../contexts/connectionContext';
 import { API_CATEGORIES } from '../api/constants';
 import { format } from 'date-fns';
 

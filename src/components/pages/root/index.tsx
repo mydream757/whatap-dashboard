@@ -1,5 +1,5 @@
 import React, { ReactElement, useEffect } from 'react';
-import { useConnection } from '../../../context/connectionContext';
+import { useConnection } from '../../../contexts/connectionContext';
 import { NavLink, useLoaderData } from 'react-router-dom';
 import { Layout } from 'antd';
 import getApiModule from '../../../api/getApiModule';
