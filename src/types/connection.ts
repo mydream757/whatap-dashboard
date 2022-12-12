@@ -18,11 +18,11 @@ type ConnectionConfig<
   title: string;
 };
 
-interface InformaticsDataConfig extends ConnectionConfig<'project'> {
+interface InformaticsConnectionConfig extends ConnectionConfig<'project'> {
   type: 'informatics';
 }
 
-interface ChartDataConfig<
+interface ChartConnectionConfig<
   Widget extends keyof ChartTypeRegistry,
   Category extends ApiCategoryKeys = ApiCategoryKeys
 > extends ConnectionConfig<Category> {
@@ -39,7 +39,7 @@ type ApiCategoryKeys = keyof typeof API_CATEGORIES;
 export type {
   ApiCategoryKeys,
   ConnectionConfig,
-  InformaticsDataConfig,
+  InformaticsConnectionConfig,
   OpenApiHeader,
-  ChartDataConfig,
+  ChartConnectionConfig,
 };

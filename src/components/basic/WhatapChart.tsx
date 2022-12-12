@@ -16,7 +16,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import DESIGN from '../../system/design';
-import { ChartDataConfig } from '../../types';
+import { ChartConnectionConfig } from '../../types';
 
 ChartJS.register(
   LinearScale,
@@ -58,7 +58,7 @@ export const WhatapChartRegistry: {
 export const getDatasetConfig = ({
   type = 'line',
   datasetOptions,
-}: Pick<ChartDataConfig<ChartType>, 'type' | 'datasetOptions'>) => {
+}: Pick<ChartConnectionConfig<ChartType>, 'type' | 'datasetOptions'>) => {
   return {
     ...WhatapChartRegistry[type]?.datasetOptions,
     ...datasetOptions,

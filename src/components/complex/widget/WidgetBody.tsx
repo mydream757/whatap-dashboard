@@ -1,7 +1,10 @@
 import React, { ReactElement } from 'react';
 import { DataRecord } from '../../../contexts/connectionContext';
 import { ChartOptions } from 'chart.js';
-import { ChartDataConfig, InformaticsDataConfig } from '../../../types';
+import {
+  ChartConnectionConfig,
+  InformaticsConnectionConfig,
+} from '../../../types';
 import { Informatics, WhatapChart } from '../../basic';
 import { getDatasetConfig } from '../../basic/WhatapChart';
 
@@ -16,7 +19,7 @@ export type BodyProps = (getWhatapChartDataArgs | getInformaticsDataArgs) & {
 };
 
 type getInformaticsDataArgs = {
-  dataConfigs: InformaticsDataConfig[];
+  dataConfigs: InformaticsConnectionConfig[];
   dataRecord?: DataRecord;
 };
 
@@ -39,7 +42,7 @@ const getInformaticsData = ({
 
 type getWhatapChartDataArgs = {
   type: ChartType;
-  dataConfigs: ChartDataConfig<ChartType, 'project'>[];
+  dataConfigs: ChartConnectionConfig<ChartType, 'project'>[];
   dataRecord?: DataRecord;
   labels?: Label[];
 };
@@ -79,7 +82,10 @@ export default function WidgetBody({
           options={options}
           data={getWhatapChartData({
             type,
-            dataConfigs: dataConfigs as ChartDataConfig<ChartType, 'project'>[],
+            dataConfigs: dataConfigs as ChartConnectionConfig<
+              ChartType,
+              'project'
+            >[],
             labels,
             dataRecord,
           })}
