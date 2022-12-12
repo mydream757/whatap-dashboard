@@ -8,8 +8,11 @@ import React, {
 } from 'react';
 import { DEMO_ACCOUNT_API_TOCKEN } from '../api/constants';
 import getApiModule from '../api/getApiModule';
-import { format } from 'date-fns';
 import { ApiCategoryKeys, OpenApiHeader } from '../types';
+import { defaultResponseParser } from '../constants/parsers';
+import startInterval from '../utils/startInterval';
+import getLatestArray from '../utils/getLatestArray';
+import sleep from '../utils/sleep';
 
 type ProjectCode = number;
 type ApiToken = string;
@@ -40,7 +43,6 @@ const getExponentialBackOffTime = (fail = 0) => {
 };
 
 type QueryKey = string;
-
 type ConnectionState = {
   apiKey: string;
   interval?: NodeJS.Timer;
@@ -65,26 +67,12 @@ export interface QueryConnectionArgs<
   intervalTime?: number;
 }
 
-const defaultResponseParser = (response: number) => {
-  return {
-    value: response,
-    label: format(new Date(Date.now()), 'mm:ss'),
-    time: Date.now(),
-  };
+const getQueryKey = ({
+  queryKey,
+  apiKey,
+}: Pick<QueryConnectionArgs, 'apiKey' | 'queryKey'>) => {
+  return queryKey || apiKey;
 };
-
-const startInterval = (callback: () => void, timeout: number) => {
-  callback();
-  return setInterval(callback, timeout);
-};
-
-function sleep(ms: number) {
-  const start = Date.now();
-  let now = start;
-  while (now - start < ms) {
-    now = Date.now();
-  }
-}
 
 function ConnectionProvider({ children }: { children?: ReactNode }) {
   /* states */
@@ -101,9 +89,8 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   const tooManyCountRef = useRef<number>(0);
   const tooManyCount = tooManyCountRef.current;
 
-  /* callbacks */
-  const clearConnection = useCallback((key?: QueryKey) => {
-    const clearOf = (key: string) => {
+  const clearConnectionBy = useCallback(
+    (key: QueryKey) => {
       const connection = connectionRecord[key];
       if (connection) {
         const { timeout, interval } = connection;
@@ -112,7 +99,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         // connection 을 종료할 경우, 그 key 에 해당하는 '대기 상태의 query' 또한 삭제한다.
         setWaitQueue((prevState) =>
           prevState.filter((data) => {
-            const targetKey = getKey({
+            const targetKey = getQueryKey({
               queryKey: data.queryKey,
               apiKey: data.apiKey,
             });
@@ -121,16 +108,15 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         );
         delete connectionRecord[key];
       }
-    };
-
-    if (key === undefined) {
-      for (const key in connectionRecord) {
-        clearOf(key);
-      }
-    } else {
-      clearOf(key);
+    },
+    [connectionRecord]
+  );
+  /* callbacks */
+  const clearConnection = useCallback(() => {
+    for (const query in connectionRecord) {
+      clearConnectionBy(query);
     }
-  }, []);
+  }, [clearConnectionBy]);
 
   const enqueueWaits = useCallback((args: QueryConnectionArgs) => {
     setWaitQueue((prevState) => [...prevState, args]);
@@ -152,117 +138,116 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     setPcode(projectCode);
   }, []);
 
-  const getKey = useCallback(
-    ({
-      queryKey,
-      apiKey,
-    }: Pick<QueryConnectionArgs, 'apiKey' | 'queryKey'>) => {
-      return queryKey || apiKey;
-    },
-    []
-  );
-
   const queryConnection = useCallback(
     (args: QueryConnectionArgs) => {
       const { queryKey, apiKey } = args;
-      const key = getKey({
+      const key = getQueryKey({
         queryKey,
         apiKey,
       });
       // query 가 일어날 경우, query 상태를 초기화함
-      clearConnection(key);
+      clearConnectionBy(key);
 
       connectionRecord[key] = { apiKey };
       connectionRecord[key].callback = () => request(args);
       enqueueWaits(args);
     },
-    [connectionRecord, apiTokenMap]
+    [connectionRecord, apiTokenMap, clearConnectionBy]
   );
 
-  const request = (args: QueryConnectionArgs) => {
-    let header: OpenApiHeader;
-    const {
-      category,
-      pcode,
-      apiKey,
-      queryKey,
-      params,
-      responseParser,
-      recurParams,
-      maxStackSize,
-    } = args;
+  const errorHandler = useCallback(
+    ({
+      error,
+      key,
+      args,
+    }: {
+      error: any;
+      key: QueryKey;
+      args: QueryConnectionArgs;
+    }) => {
+      clearConnectionBy(key);
+      //TODO: casing error status
+      if (error.status === 429) {
+        console.log('too many request: ', error);
 
-    switch (category) {
-      case 'account':
-        header = {
-          'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
-        };
-        break;
-      case 'project':
-      default:
-        header = {
-          'x-whatap-token': apiTokenMap[pcode],
-          'x-whatap-pcode': `${pcode}`,
-        };
-        break;
-    }
+        // set timeout for loop request
+        const t = setTimeout(() => {
+          enqueueWaits(args);
+        }, getExponentialBackOffTime(tooManyCountRef.current++));
+        connectionRecord[key].timeout = t;
+      } else {
+        //TODO: retry when error occurred
+        console.log('other errors: ', error);
+      }
+    },
+    [clearConnectionBy, connectionRecord]
+  );
 
-    const key = getKey({
-      apiKey,
-      queryKey,
-    });
+  const request = useCallback(
+    (args: QueryConnectionArgs) => {
+      const {
+        category,
+        pcode,
+        apiKey,
+        queryKey,
+        params,
+        responseParser,
+        recurParams,
+        maxStackSize,
+      } = args;
 
-    // api 호출은 apiKey 를 통하고, 요청 및 응답에 대한 상태 관리는 'key' 에 맵핑
-    getApiModule(category, { ...header })(apiKey, params)
-      .then((result) => {
-        setDataRecord((prevState) => {
-          let currentRecord = responseParser
-            ? responseParser(result.data)
-            : [defaultResponseParser(result.data)];
-
-          if (maxStackSize) {
-            const prevRecord = prevState[key] || [];
-            const mergedRecord = [...prevRecord, ...currentRecord];
-
-            while (maxStackSize < mergedRecord.length) {
-              mergedRecord.shift();
-            }
-
-            currentRecord = mergedRecord;
-          }
-
-          return {
-            ...prevState,
-            [key]: currentRecord,
+      let header: OpenApiHeader;
+      switch (category) {
+        case 'account':
+          header = {
+            'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
           };
-        });
-        const nextQueryArgs = {
-          ...args,
-          params: recurParams ? recurParams(params) : params,
-        };
+          break;
+        case 'project':
+        default:
+          header = {
+            'x-whatap-token': apiTokenMap[pcode],
+            'x-whatap-pcode': `${pcode}`,
+          };
+          break;
+      }
 
-        const nextCallback = () => request(nextQueryArgs);
-        connectionRecord[key].callback = nextCallback;
-      })
-
-      .catch((error) => {
-        //TODO: casing error status
-        if (error.status === 429) {
-          console.log('too many request: ', error);
-
-          tooManyCountRef.current++;
-          clearConnection(key);
-
-          // set timeout for loop request
-          const t = setTimeout(() => {
-            enqueueWaits(args);
-          }, getExponentialBackOffTime(tooManyCountRef.current++));
-          connectionRecord[key].timeout = t;
-        } else {
-          console.log('other errors: ', error);
-        }
+      const key = getQueryKey({
+        apiKey,
+        queryKey,
       });
-  };
+      // api 호출은 apiKey 를 통하고, 요청 및 응답에 대한 상태 관리는 'key' 에 맵핑
+      getApiModule(category, { ...header })(apiKey, params)
+        .then((result) => {
+          setDataRecord((prevState) => {
+            const parser = responseParser || defaultResponseParser;
+
+            return {
+              ...prevState,
+              [key]: getLatestArray(
+                prevState[key],
+                parser(result.data),
+                maxStackSize
+              ),
+            };
+          });
+          const nextQueryArgs = {
+            ...args,
+            params: recurParams ? recurParams(params) : params,
+          };
+
+          connectionRecord[key].callback = () => request(nextQueryArgs);
+        })
+        .catch((error) =>
+          errorHandler({
+            error,
+            key,
+            args,
+          })
+        );
+    },
+    [errorHandler, connectionRecord, apiTokenMap]
+  );
 
   /* memoized values */
   const isReady = useMemo(() => {
@@ -279,7 +264,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
       const wait = waitQueue[0];
       if (wait) {
         const { queryKey, intervalTime, apiKey } = wait;
-        const key = getKey({
+        const key = getQueryKey({
           queryKey,
           apiKey,
         });

@@ -11,6 +11,16 @@ type ParserName = `${apiKeys}-into-${string}`;
 
 type ParserRegistry = { [key: ParserName]: ResponseParser };
 
+export const defaultResponseParser: ResponseParser = (response: number) => {
+  return [
+    {
+      value: response,
+      label: format(new Date(Date.now()), 'mm:ss'),
+      time: Date.now(),
+    },
+  ];
+};
+
 const API_RESPONSE_PARSERS: ParserRegistry = {
   'api/json/remote/{stime}/{etime}-into-country': (response: {
     records: {
