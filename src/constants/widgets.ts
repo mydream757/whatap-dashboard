@@ -21,42 +21,36 @@ const WidgetConfig: WidgetListItemRegistry = {
       dataConfigs: [
         {
           type: 'informatics',
-          stack: false,
           title: '메서드',
           apiCategory: 'project',
           apiUrl: 'api/act_method',
         },
         {
           type: 'informatics',
-          stack: false,
           title: '에이전트',
           apiCategory: 'project',
           apiUrl: 'api/act_agent',
         },
         {
           type: 'informatics',
-          stack: false,
           title: '5분 간 고유 사용자',
           apiCategory: 'project',
           apiUrl: 'api/user',
         },
         {
           type: 'informatics',
-          stack: false,
           title: 'Sql',
           apiCategory: 'project',
           apiUrl: 'api/act_sql',
         },
         {
           type: 'informatics',
-          stack: false,
           title: 'Http 호출',
           apiCategory: 'project',
           apiUrl: 'api/act_httpc',
         },
         {
           type: 'informatics',
-          stack: false,
           title: '소켓',
           apiCategory: 'project',
           apiUrl: 'api/act_socket',
@@ -73,21 +67,18 @@ const WidgetConfig: WidgetListItemRegistry = {
       dataConfigs: [
         {
           type: 'informatics',
-          stack: false,
           title: '총 트랜잭션',
           apiCategory: 'project',
           apiUrl: 'api/txcount',
         },
         {
           type: 'informatics',
-          stack: false,
           title: '활성 트랜잭션',
           apiCategory: 'project',
           apiUrl: 'api/actx',
         },
         {
           type: 'informatics',
-          stack: false,
           title: '초당 트랜잭션',
           apiCategory: 'project',
           apiUrl: 'api/tps',
@@ -104,7 +95,6 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'line',
       dataConfigs: [
         {
-          stack: false,
           title: API_CATEGORIES['project']['api/dbc_count'],
           apiCategory: 'project',
           apiUrl: 'api/json/exception/{stime}/{etime}',
@@ -132,7 +122,6 @@ const WidgetConfig: WidgetListItemRegistry = {
       dataConfigs: [
         {
           type: 'bar',
-          stack: false,
           title: 'Client IP',
           apiCategory: 'project',
           apiUrl: 'api/json/remote/{stime}/{etime}',
@@ -163,7 +152,6 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'line',
       dataConfigs: [
         {
-          stack: false,
           title: 'visitors',
           apiCategory: 'project',
           apiUrl: 'api/json/visitor_5m/{stime}/{etime}',
@@ -194,7 +182,6 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'line',
       dataConfigs: [
         {
-          stack: false,
           title: 'visitors',
           apiCategory: 'project',
           apiUrl: 'api/json/visitor_h/{stime}/{etime}',
@@ -225,7 +212,7 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'line',
       dataConfigs: [
         {
-          stack: true,
+          maxStackSize: 10,
           title: API_CATEGORIES['project']['api/threadpool_active'],
           apiCategory: 'project',
           apiUrl: 'api/threadpool_active',
@@ -242,7 +229,7 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'line',
       dataConfigs: [
         {
-          stack: true,
+          maxStackSize: 20,
           title: API_CATEGORIES['project']['api/threadpool_queue'],
           apiCategory: 'project',
           apiUrl: 'api/threadpool_queue',

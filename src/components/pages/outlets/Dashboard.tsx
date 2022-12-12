@@ -39,10 +39,9 @@ export default function Dashboard(): ReactElement {
             pcode: Number(pCode),
             category: config.apiCategory,
             key: config.apiUrl,
-            timeout: 5000,
             params: config.params,
+            maxStackSize: config.maxStackSize,
             recurParams: config.recurParams,
-            updateData: config.stack,
             responseParser: config.responseParser,
           });
         });

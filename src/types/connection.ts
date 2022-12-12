@@ -8,7 +8,7 @@ type ConnectionConfig<
 > = {
   apiCategory: Category;
   apiUrl: keyof typeof API_CATEGORIES[Category];
-  stack?: boolean;
+  maxStackSize?: number;
   params?: Params;
   responseParser?: ResponseParser;
   recurParams?: (args?: Params) => Params;

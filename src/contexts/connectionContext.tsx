@@ -31,7 +31,7 @@ export interface ConnectionResult<Data = number> {
 
 export type DataRecord = Record<string, ConnectionResult[]>;
 
-const CONNECTION_INTERVAL = 5000;
+export const CONNECTION_INTERVAL = 5000;
 const CONNECTION_TERM = 25;
 const MAXIMUM_BACKOFF = 1000 * 2;
 
@@ -45,10 +45,10 @@ interface QueryConnectionArgs<Param = { [key: string]: string | number }> {
   fail?: number;
   key: string;
   responseParser?: (response: any) => ConnectionResult[];
-  updateData?: boolean;
+  maxStackSize?: number;
   params?: Param;
   recurParams?: (args?: Param) => Param;
-  timeout?: number;
+  intervalTime?: number;
 }
 
 const defaultResponseParser = (response: number) => {
@@ -174,18 +174,24 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     getApiModule(args.category, { ...header })(args.key, args.params)
       .then((result) => {
         setDataRecord((prevState) => {
-          const prevValue = prevState[args.key];
-          const parsedResponse = args.responseParser
+          let currentRecord = args.responseParser
             ? args.responseParser(result.data)
             : [defaultResponseParser(result.data)];
 
-          const nextRecord = [
-            ...(args.updateData && prevValue ? prevValue : []),
-            ...parsedResponse,
-          ];
+          if (args.maxStackSize) {
+            const prevRecord = prevState[args.key] || [];
+            const mergedRecord = [...prevRecord, ...currentRecord];
+
+            while (args.maxStackSize < mergedRecord.length) {
+              mergedRecord.shift();
+            }
+
+            currentRecord = mergedRecord;
+          }
+
           return {
             ...prevState,
-            [args.key]: nextRecord,
+            [args.key]: currentRecord,
           };
         });
         const nextQueryArgs = {
@@ -231,20 +237,20 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     if (isReady && waitQueue[0]) {
       const wait = waitQueue[0];
       if (wait) {
-        const { key } = wait;
+        const { key, intervalTime } = wait;
 
         const nextInterval = startInterval(() => {
           const callback = connectionRecord[key].callback;
           callback && callback();
-        }, CONNECTION_INTERVAL);
+        }, intervalTime || CONNECTION_INTERVAL);
 
-        const updateInterval = () => {
+        const startIntervalAfter = () => {
           connectionRecord[key].interval = nextInterval;
         };
 
         const term = CONNECTION_TERM * waitQueue.length - 1;
 
-        connectionRecord[key].timeout = setTimeout(updateInterval, term);
+        connectionRecord[key].timeout = setTimeout(startIntervalAfter, term);
         dequeueWaits();
       }
     }
