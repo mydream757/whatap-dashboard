@@ -63,7 +63,7 @@ const API_RESPONSE_PARSERS: ParserRegistry = {
       return {
         value: count,
         time: time,
-        label: format(new Date(time), 'hh:mm'),
+        label: format(new Date(time), 'HH:mm'),
       };
     });
   },

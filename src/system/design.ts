@@ -4,7 +4,7 @@ type HEX = `#${string}`;
 
 export type Color = RGB | RGBA | HEX;
 
-type BasicColor = 'black' | 'grey' | 'mint';
+type BasicColor = 'black' | 'grey' | 'mint' | 'red';
 type Tone = 10 | 100;
 
 type ColorPalette = {
@@ -23,6 +23,10 @@ const COLOR_REGISTRY: { [color in BasicColor]: ColorPalette } = {
   grey: {
     10: 'rgba(131, 147, 147, 0.69)',
     100: 'rgba(107, 119, 119, 0.69)',
+  },
+  red: {
+    10: 'rgba(246, 34, 34, 0.96)',
+    100: 'rgba(176, 21, 21, 0.96)',
   },
 } as const;
 

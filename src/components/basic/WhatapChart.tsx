@@ -8,6 +8,7 @@ import {
   Chart as ChartJS,
   ChartType,
   ChartTypeRegistry,
+  Filler,
   Legend,
   LinearScale,
   LineController,
@@ -25,6 +26,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   Legend,
+  Filler,
   Tooltip,
   LineController,
   BarController
@@ -39,11 +41,10 @@ export const WhatapChartRegistry: {
 } = {
   line: {
     datasetOptions: {
-      pointHoverRadius: 1.5,
+      pointHoverRadius: 1,
       pointStyle: 'circle',
-      pointBorderColor: DESIGN.COLOR.mint['100'],
-      pointBackgroundColor: DESIGN.COLOR.mint['100'],
-      pointHoverBorderColor: DESIGN.COLOR.grey['100'],
+      backgroundColor: DESIGN.COLOR.mint['100'],
+      borderColor: DESIGN.COLOR.mint['100'],
     },
   },
   bar: {
@@ -77,7 +78,7 @@ export default function WhatapChart({ ...props }: ChartProps): ReactElement {
         },
         ...props.options,
       }}
-      updateMode={'active'}
+      updateMode={'none'}
     />
   );
 }

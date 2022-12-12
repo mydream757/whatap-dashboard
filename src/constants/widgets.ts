@@ -1,7 +1,8 @@
 import { WidgetProps } from '../components/complex/widget/Widget';
 import { API_CATEGORIES } from '../api/constants';
 import API_RESPONSE_PARSERS from './parsers';
-import { startOfToday } from 'date-fns';
+import { startOfToday, subDays } from 'date-fns';
+import DESIGN from '../system/design';
 
 export interface WidgetListItem extends WidgetProps {
   labelKey?: string;
@@ -144,7 +145,7 @@ const WidgetConfig: WidgetListItemRegistry = {
     },
   },
   activeUsers5m: {
-    labelKey: 'api/json/visitor_5m/{stime}/{etime}',
+    labelKey: 'previousTotal',
     header: {
       title: '활성 사용자 (5분 단위)',
     },
@@ -152,12 +153,40 @@ const WidgetConfig: WidgetListItemRegistry = {
       type: 'line',
       dataConfigs: [
         {
+          type: 'line',
+          datasetOptions: {
+            pointRadius: 0.5,
+            backgroundColor: DESIGN.COLOR.red['10'],
+            borderColor: DESIGN.COLOR.red['10'],
+            order: 2,
+          },
+          timeout: 1000 * 60 * 60,
+          title: 'visitors',
+          apiCategory: 'project',
+          queryKey: 'previousTotal',
+          apiKey: 'api/json/visitor_5m/{stime}/{etime}',
+          params: {
+            etime: startOfToday().getTime(),
+            stime: subDays(startOfToday(), 1).getTime(),
+          },
+          responseParser:
+            API_RESPONSE_PARSERS[
+              'api/json/visitor_5m/{stime}/{etime}-into-time-series'
+            ],
+        },
+        {
+          type: 'line',
           title: 'visitors',
           apiCategory: 'project',
           apiKey: 'api/json/visitor_5m/{stime}/{etime}',
           params: {
             etime: Date.now(),
             stime: startOfToday().getTime(),
+          },
+          datasetOptions: {
+            pointRadius: 0.5,
+            fill: 'start',
+            order: 1,
           },
           responseParser:
             API_RESPONSE_PARSERS[

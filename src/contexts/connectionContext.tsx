@@ -32,7 +32,14 @@ export interface ConnectionResult<Data = number> {
   time: number;
 }
 
-export type DataRecord = Record<string, ConnectionResult[]>;
+type QueryKey = string;
+type ConnectionState = {
+  apiKey: string;
+  interval?: NodeJS.Timer;
+  timeout?: NodeJS.Timer;
+  callback?: () => void;
+};
+export type DataRecord = Record<QueryKey, ConnectionResult[]>;
 
 export const CONNECTION_INTERVAL = 5000;
 const CONNECTION_TERM = 25;
@@ -40,14 +47,6 @@ const MAXIMUM_BACKOFF = 1000 * 2;
 
 const getExponentialBackOffTime = (fail = 0) => {
   return Math.min(fail * 50, MAXIMUM_BACKOFF);
-};
-
-type QueryKey = string;
-type ConnectionState = {
-  apiKey: string;
-  interval?: NodeJS.Timer;
-  timeout?: NodeJS.Timer;
-  callback?: () => void;
 };
 
 type ConnectionStateRecord = Record<QueryKey, ConnectionState>;

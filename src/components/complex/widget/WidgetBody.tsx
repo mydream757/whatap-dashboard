@@ -54,15 +54,19 @@ const getWhatapChartData = ({
 }: getWhatapChartDataArgs) => {
   return {
     labels: labels || [],
-    datasets: dataConfigs.map(({ type: eachType, apiKey, datasetOptions }) => {
-      return {
-        ...getDatasetConfig({
-          type: eachType || type,
-          datasetOptions,
-        }),
-        data: (dataRecord[apiKey] || []).map((result) => result?.value),
-      };
-    }),
+    datasets: dataConfigs.map(
+      ({ type: eachType, apiKey, queryKey, datasetOptions }) => {
+        return {
+          ...getDatasetConfig({
+            type: eachType || type,
+            datasetOptions,
+          }),
+          data: (dataRecord[queryKey || apiKey] || []).map(
+            (result) => result?.value
+          ),
+        };
+      }
+    ),
   };
 };
 

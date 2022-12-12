@@ -11,6 +11,7 @@ type ConnectionConfig<
   apiKey: keyof typeof API_CATEGORIES[Category] | string;
   maxStackSize?: number;
   params?: Params;
+  timeout?: number;
   responseParser?: ResponseParser;
   recurParams?: (args?: Params) => Params;
   dataType?: 'series' | 'active';
