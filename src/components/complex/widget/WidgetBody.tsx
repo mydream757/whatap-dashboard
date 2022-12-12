@@ -27,14 +27,14 @@ const getInformaticsData = ({
   dataConfigs,
   dataRecord = {},
 }: getInformaticsDataArgs) => {
-  return dataConfigs.map((config) => {
-    const spots = dataRecord[config.apiUrl];
+  return dataConfigs.map(({ title, apiKey }) => {
+    const spots = dataRecord[apiKey];
     const length = spots?.length;
 
     const latestValue = length ? spots[length - 1].value : 0;
 
     return {
-      title: config.title,
+      title,
       value: latestValue,
     };
   });
@@ -54,13 +54,13 @@ const getWhatapChartData = ({
 }: getWhatapChartDataArgs) => {
   return {
     labels: labels || [],
-    datasets: dataConfigs.map(({ type: eachType, apiUrl, datasetOptions }) => {
+    datasets: dataConfigs.map(({ type: eachType, apiKey, datasetOptions }) => {
       return {
         ...getDatasetConfig({
           type: eachType || type,
           datasetOptions,
         }),
-        data: (dataRecord[apiUrl] || []).map((result) => result?.value),
+        data: (dataRecord[apiKey] || []).map((result) => result?.value),
       };
     }),
   };

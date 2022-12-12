@@ -1,9 +1,13 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { Layout } from 'antd';
-import { useConnection } from '../../../contexts/connectionContext';
+import {
+  QueryConnectionArgs,
+  useConnection,
+} from '../../../contexts/connectionContext';
 import { useLoaderData } from 'react-router-dom';
 import WidgetConfig from '../../../constants/widgets';
 import { WidgetList } from '../../list/WidgetList';
+import { ConnectionConfig } from '../../../types';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;
@@ -21,8 +25,26 @@ const initialList: (keyof typeof WidgetConfig)[] = [
   'queueingThread',
 ];
 
+const parseConnectionConfig = ({
+  apiCategory,
+  apiKey,
+  params,
+  maxStackSize,
+  recurParams,
+  responseParser,
+}: ConnectionConfig): Omit<QueryConnectionArgs, 'pcode'> => {
+  return {
+    category: apiCategory,
+    apiKey: apiKey,
+    params: params,
+    maxStackSize: maxStackSize,
+    recurParams: recurParams,
+    responseParser: responseParser,
+  };
+};
+
 export default function Dashboard(): ReactElement {
-  const pCode = useLoaderData();
+  const pathParam = useLoaderData();
   const { selectProject, apiTokenMap, clear, queryConnection, dataRecord } =
     useConnection();
 
@@ -31,27 +53,22 @@ export default function Dashboard(): ReactElement {
   });
 
   useEffect(() => {
-    if (typeof Number(pCode) === 'number' && apiTokenMap[Number(pCode)]) {
-      selectProject(Number(pCode));
+    const pcode = Number(pathParam);
+    if (apiTokenMap[pcode]) {
+      selectProject(pcode);
       widgetList.forEach((config) => {
         config.body.dataConfigs.forEach((config) => {
           queryConnection({
-            pcode: Number(pCode),
-            category: config.apiCategory,
-            key: config.apiUrl,
-            params: config.params,
-            maxStackSize: config.maxStackSize,
-            recurParams: config.recurParams,
-            responseParser: config.responseParser,
+            ...parseConnectionConfig(config),
+            pcode,
           });
         });
       });
     }
-
     return () => {
       clear();
     };
-  }, [pCode, apiTokenMap, widgetList]);
+  }, [pathParam, apiTokenMap, widgetList]);
 
   return (
     <Layout style={{ padding: '8px' }}>

@@ -6,8 +6,9 @@ type ConnectionConfig<
   Category extends ApiCategoryKeys = ApiCategoryKeys,
   Params = { [key: string]: string | number }
 > = {
+  queryKey?: string;
   apiCategory: Category;
-  apiUrl: keyof typeof API_CATEGORIES[Category];
+  apiKey: keyof typeof API_CATEGORIES[Category] | string;
   maxStackSize?: number;
   params?: Params;
   responseParser?: ResponseParser;

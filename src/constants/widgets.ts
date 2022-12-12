@@ -23,37 +23,37 @@ const WidgetConfig: WidgetListItemRegistry = {
           type: 'informatics',
           title: '메서드',
           apiCategory: 'project',
-          apiUrl: 'api/act_method',
+          apiKey: 'api/act_method',
         },
         {
           type: 'informatics',
           title: '에이전트',
           apiCategory: 'project',
-          apiUrl: 'api/act_agent',
+          apiKey: 'api/act_agent',
         },
         {
           type: 'informatics',
           title: '5분 간 고유 사용자',
           apiCategory: 'project',
-          apiUrl: 'api/user',
+          apiKey: 'api/user',
         },
         {
           type: 'informatics',
           title: 'Sql',
           apiCategory: 'project',
-          apiUrl: 'api/act_sql',
+          apiKey: 'api/act_sql',
         },
         {
           type: 'informatics',
           title: 'Http 호출',
           apiCategory: 'project',
-          apiUrl: 'api/act_httpc',
+          apiKey: 'api/act_httpc',
         },
         {
           type: 'informatics',
           title: '소켓',
           apiCategory: 'project',
-          apiUrl: 'api/act_socket',
+          apiKey: 'api/act_socket',
         },
       ],
     },
@@ -69,19 +69,19 @@ const WidgetConfig: WidgetListItemRegistry = {
           type: 'informatics',
           title: '총 트랜잭션',
           apiCategory: 'project',
-          apiUrl: 'api/txcount',
+          apiKey: 'api/txcount',
         },
         {
           type: 'informatics',
           title: '활성 트랜잭션',
           apiCategory: 'project',
-          apiUrl: 'api/actx',
+          apiKey: 'api/actx',
         },
         {
           type: 'informatics',
           title: '초당 트랜잭션',
           apiCategory: 'project',
-          apiUrl: 'api/tps',
+          apiKey: 'api/tps',
         },
       ],
     },
@@ -97,7 +97,7 @@ const WidgetConfig: WidgetListItemRegistry = {
         {
           title: API_CATEGORIES['project']['api/dbc_count'],
           apiCategory: 'project',
-          apiUrl: 'api/json/exception/{stime}/{etime}',
+          apiKey: 'api/json/exception/{stime}/{etime}',
           params: {
             etime: Date.now(),
             stime: Date.now() - 1000 * 60 * 60,
@@ -124,7 +124,7 @@ const WidgetConfig: WidgetListItemRegistry = {
           type: 'bar',
           title: 'Client IP',
           apiCategory: 'project',
-          apiUrl: 'api/json/remote/{stime}/{etime}',
+          apiKey: 'api/json/remote/{stime}/{etime}',
           responseParser:
             API_RESPONSE_PARSERS[
               'api/json/remote/{stime}/{etime}-into-country'
@@ -154,7 +154,7 @@ const WidgetConfig: WidgetListItemRegistry = {
         {
           title: 'visitors',
           apiCategory: 'project',
-          apiUrl: 'api/json/visitor_5m/{stime}/{etime}',
+          apiKey: 'api/json/visitor_5m/{stime}/{etime}',
           params: {
             etime: Date.now(),
             stime: startOfToday().getTime(),
@@ -184,7 +184,7 @@ const WidgetConfig: WidgetListItemRegistry = {
         {
           title: 'visitors',
           apiCategory: 'project',
-          apiUrl: 'api/json/visitor_h/{stime}/{etime}',
+          apiKey: 'api/json/visitor_h/{stime}/{etime}',
           params: {
             etime: Date.now(),
             stime: startOfToday().getTime(),
@@ -215,7 +215,7 @@ const WidgetConfig: WidgetListItemRegistry = {
           maxStackSize: 10,
           title: API_CATEGORIES['project']['api/threadpool_active'],
           apiCategory: 'project',
-          apiUrl: 'api/threadpool_active',
+          apiKey: 'api/threadpool_active',
         },
       ],
     },
@@ -232,7 +232,7 @@ const WidgetConfig: WidgetListItemRegistry = {
           maxStackSize: 20,
           title: API_CATEGORIES['project']['api/threadpool_queue'],
           apiCategory: 'project',
-          apiUrl: 'api/threadpool_queue',
+          apiKey: 'api/threadpool_queue',
         },
       ],
     },

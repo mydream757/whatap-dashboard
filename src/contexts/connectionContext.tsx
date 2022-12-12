@@ -17,7 +17,7 @@ type ApiToken = string;
 interface ConnectionContextReturn {
   queryConnection: (args: QueryConnectionArgs) => void;
   selectProject: (projectCode: number) => void;
-  setApiTokenMap: (value: { [key: string]: string }) => void;
+  setApiTokenMap: (value: { [key: ApiToken]: string }) => void;
   dataRecord: DataRecord;
   clear: () => void;
   apiTokenMap: Record<ProjectCode, ApiToken>;
@@ -39,11 +39,25 @@ const getExponentialBackOffTime = (fail = 0) => {
   return Math.min(fail * 50, MAXIMUM_BACKOFF);
 };
 
-interface QueryConnectionArgs<Param = { [key: string]: string | number }> {
+type QueryKey = string;
+
+type ConnectionState = {
+  apiKey: string;
+  interval?: NodeJS.Timer;
+  timeout?: NodeJS.Timer;
+  callback?: () => void;
+};
+
+type ConnectionStateRecord = Record<QueryKey, ConnectionState>;
+
+export interface QueryConnectionArgs<
+  Param = { [field: string]: string | number }
+> {
   pcode: number;
   category: ApiCategoryKeys;
   fail?: number;
-  key: string;
+  queryKey?: QueryKey;
+  apiKey: string;
   responseParser?: (response: any) => ConnectionResult[];
   maxStackSize?: number;
   params?: Param;
@@ -72,15 +86,6 @@ function sleep(ms: number) {
   }
 }
 
-type ApiQueryKey = string;
-type ConnectionState = {
-  interval?: NodeJS.Timer;
-  timeout?: NodeJS.Timer;
-  callback?: () => void;
-};
-
-type ConnectionStateRecord = Record<ApiQueryKey, ConnectionState>;
-
 function ConnectionProvider({ children }: { children?: ReactNode }) {
   /* states */
   const [pcode, setPcode] = useState<ProjectCode>();
@@ -97,7 +102,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   const tooManyCount = tooManyCountRef.current;
 
   /* callbacks */
-  const clearConnection = useCallback((key?: string) => {
+  const clearConnection = useCallback((key?: QueryKey) => {
     const clearOf = (key: string) => {
       const connection = connectionRecord[key];
       if (connection) {
@@ -106,7 +111,13 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         clearInterval(interval);
         // connection 을 종료할 경우, 그 key 에 해당하는 '대기 상태의 query' 또한 삭제한다.
         setWaitQueue((prevState) =>
-          prevState.filter((data) => data.key !== key)
+          prevState.filter((data) => {
+            const targetKey = getKey({
+              queryKey: data.queryKey,
+              apiKey: data.apiKey,
+            });
+            return targetKey !== key;
+          })
         );
         delete connectionRecord[key];
       }
@@ -141,13 +152,27 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     setPcode(projectCode);
   }, []);
 
+  const getKey = useCallback(
+    ({
+      queryKey,
+      apiKey,
+    }: Pick<QueryConnectionArgs, 'apiKey' | 'queryKey'>) => {
+      return queryKey || apiKey;
+    },
+    []
+  );
+
   const queryConnection = useCallback(
     (args: QueryConnectionArgs) => {
-      const { key } = args;
+      const { queryKey, apiKey } = args;
+      const key = getKey({
+        queryKey,
+        apiKey,
+      });
       // query 가 일어날 경우, query 상태를 초기화함
       clearConnection(key);
 
-      connectionRecord[key] = {};
+      connectionRecord[key] = { apiKey };
       connectionRecord[key].callback = () => request(args);
       enqueueWaits(args);
     },
@@ -156,7 +181,18 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
   const request = (args: QueryConnectionArgs) => {
     let header: OpenApiHeader;
-    switch (args.category) {
+    const {
+      category,
+      pcode,
+      apiKey,
+      queryKey,
+      params,
+      responseParser,
+      recurParams,
+      maxStackSize,
+    } = args;
+
+    switch (category) {
       case 'account':
         header = {
           'x-whatap-token': DEMO_ACCOUNT_API_TOCKEN,
@@ -165,24 +201,30 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
       case 'project':
       default:
         header = {
-          'x-whatap-token': apiTokenMap[args.pcode],
-          'x-whatap-pcode': `${args.pcode}`,
+          'x-whatap-token': apiTokenMap[pcode],
+          'x-whatap-pcode': `${pcode}`,
         };
         break;
     }
 
-    getApiModule(args.category, { ...header })(args.key, args.params)
+    const key = getKey({
+      apiKey,
+      queryKey,
+    });
+
+    // api 호출은 apiKey 를 통하고, 요청 및 응답에 대한 상태 관리는 'key' 에 맵핑
+    getApiModule(category, { ...header })(apiKey, params)
       .then((result) => {
         setDataRecord((prevState) => {
-          let currentRecord = args.responseParser
-            ? args.responseParser(result.data)
+          let currentRecord = responseParser
+            ? responseParser(result.data)
             : [defaultResponseParser(result.data)];
 
-          if (args.maxStackSize) {
-            const prevRecord = prevState[args.key] || [];
+          if (maxStackSize) {
+            const prevRecord = prevState[key] || [];
             const mergedRecord = [...prevRecord, ...currentRecord];
 
-            while (args.maxStackSize < mergedRecord.length) {
+            while (maxStackSize < mergedRecord.length) {
               mergedRecord.shift();
             }
 
@@ -191,17 +233,16 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
           return {
             ...prevState,
-            [args.key]: currentRecord,
+            [key]: currentRecord,
           };
         });
         const nextQueryArgs = {
           ...args,
-          params: args.recurParams
-            ? args.recurParams(args.params)
-            : args.params,
+          params: recurParams ? recurParams(params) : params,
         };
 
-        connectionRecord[args.key].callback = () => request(nextQueryArgs);
+        const nextCallback = () => request(nextQueryArgs);
+        connectionRecord[key].callback = nextCallback;
       })
 
       .catch((error) => {
@@ -210,13 +251,13 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
           console.log('too many request: ', error);
 
           tooManyCountRef.current++;
-          clearConnection(args.key);
+          clearConnection(key);
 
           // set timeout for loop request
           const t = setTimeout(() => {
             enqueueWaits(args);
           }, getExponentialBackOffTime(tooManyCountRef.current++));
-          connectionRecord[args.key].timeout = t;
+          connectionRecord[key].timeout = t;
         } else {
           console.log('other errors: ', error);
         }
@@ -237,7 +278,11 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     if (isReady && waitQueue[0]) {
       const wait = waitQueue[0];
       if (wait) {
-        const { key, intervalTime } = wait;
+        const { queryKey, intervalTime, apiKey } = wait;
+        const key = getKey({
+          queryKey,
+          apiKey,
+        });
 
         const nextInterval = startInterval(() => {
           const callback = connectionRecord[key].callback;
