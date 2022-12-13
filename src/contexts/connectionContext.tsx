@@ -14,9 +14,6 @@ import startInterval from '../utils/startInterval';
 import getLatestArray from '../utils/getLatestArray';
 import sleep from '../utils/sleep';
 
-type ProjectCode = number;
-type ApiToken = string;
-
 interface ConnectionContextReturn {
   queryConnection: (args: QueryConnectionArgs) => void;
   selectProject: (projectCode: number) => void;
@@ -33,6 +30,10 @@ export interface ConnectionResult<Data = number> {
 }
 
 type QueryKey = string;
+
+type ProjectCode = number;
+type ApiToken = string;
+
 type ConnectionState = {
   apiKey: string;
   interval?: NodeJS.Timer;
@@ -40,14 +41,6 @@ type ConnectionState = {
   callback?: () => void;
 };
 export type DataRecord = Record<QueryKey, ConnectionResult[]>;
-
-export const CONNECTION_INTERVAL = 5000;
-const CONNECTION_TERM = 25;
-const MAXIMUM_BACKOFF = 1000 * 2;
-
-const getExponentialBackOffTime = (fail = 0) => {
-  return Math.min(fail * 50, MAXIMUM_BACKOFF);
-};
 
 type ConnectionStateRecord = Record<QueryKey, ConnectionState>;
 
@@ -73,21 +66,34 @@ const getQueryKey = ({
   return queryKey || apiKey;
 };
 
+export const CONNECTION_INTERVAL = 5000;
+const CONNECTION_TERM = 25;
+const MAXIMUM_BACKOFF = CONNECTION_INTERVAL / 2;
+
+const getBackOffTime = (fail = 0) => {
+  return Math.min(CONNECTION_TERM + 2 ** fail, MAXIMUM_BACKOFF);
+};
+
 function ConnectionProvider({ children }: { children?: ReactNode }) {
   /* states */
   const [pcode, setPcode] = useState<ProjectCode>();
+  //'프로젝트 코드 <-> 프로젝트의 api 토큰'에 대한 map
   const [apiTokenMap, setApiTokenMap] = useState<Record<ProjectCode, ApiToken>>(
     {}
   );
+  //'queryKey <-> 가공된 응답 데이터'에 대한 map
   const [dataRecord, setDataRecord] = useState<DataRecord>({});
+  // 수행되어야할 네트워크 요청을 위한 argument 를 담아 대기시키기 위한 queue
   const [waitQueue, setWaitQueue] = useState<QueryConnectionArgs[]>([]);
   /* refs */
+  // interval 및 timeout 을 통해 관리되는 네트워크 요청 주기 관련 정보를 저장할 변수의 ref
   const connectionRecordRef = useRef<ConnectionStateRecord>({});
   const connectionRecord = connectionRecordRef.current;
 
-  const tooManyCountRef = useRef<number>(0);
-  const tooManyCount = tooManyCountRef.current;
+  const tooManyRequestCountRef = useRef<number>(0);
+  const tooManyCount = tooManyRequestCountRef.current;
 
+  // 네트워크 요청을 통해 적재된 데이터는 유지하고, interval 로 수행되고 있는 모든 네트워크 요청 상태를 초기화함
   const clearConnectionBy = useCallback(
     (key: QueryKey) => {
       const connection = connectionRecord[key];
@@ -95,7 +101,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         const { timeout, interval } = connection;
         clearTimeout(timeout);
         clearInterval(interval);
-        // connection 을 종료할 경우, 그 key 에 해당하는 '대기 상태의 query' 또한 삭제한다.
+        // connection 을 종료할 경우, 그 key 에 해당하는 '대기 상태의 요청' 또한 삭제한다.
         setWaitQueue((prevState) =>
           prevState.filter((data) => {
             const targetKey = getQueryKey({
@@ -111,7 +117,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     [connectionRecord]
   );
   /* callbacks */
-  const clearConnection = useCallback(() => {
+  const clearConnections = useCallback(() => {
     for (const query in connectionRecord) {
       clearConnectionBy(query);
     }
@@ -125,10 +131,11 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     setWaitQueue((prevState) => prevState.filter((_, i) => i !== index));
   }, []);
 
+  // context 가 가지고 있는 모든 상태를 초기화
   const clear = useCallback(() => {
     setWaitQueue([]);
-    tooManyCountRef.current = 0;
-    clearConnection();
+    tooManyRequestCountRef.current = 0;
+    clearConnections();
     setDataRecord({});
     sleep(1000);
   }, []);
@@ -136,51 +143,6 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   const selectProject = useCallback((projectCode: number) => {
     setPcode(projectCode);
   }, []);
-
-  const queryConnection = useCallback(
-    (args: QueryConnectionArgs) => {
-      const { queryKey, apiKey } = args;
-      const key = getQueryKey({
-        queryKey,
-        apiKey,
-      });
-      // query 가 일어날 경우, query 상태를 초기화함
-      clearConnectionBy(key);
-
-      connectionRecord[key] = { apiKey };
-      connectionRecord[key].callback = () => request(args);
-      enqueueWaits(args);
-    },
-    [connectionRecord, apiTokenMap, clearConnectionBy]
-  );
-
-  const errorHandler = useCallback(
-    ({
-      error,
-      key,
-      args,
-    }: {
-      error: any;
-      key: QueryKey;
-      args: QueryConnectionArgs;
-    }) => {
-      clearConnectionBy(key);
-      //TODO: casing error status
-      if (error.status === 429) {
-        console.log('too many request: ', error);
-
-        // set timeout for loop request
-        const t = setTimeout(() => {
-          enqueueWaits(args);
-        }, getExponentialBackOffTime(tooManyCountRef.current++));
-        connectionRecord[key].timeout = t;
-      } else {
-        //TODO: retry when error occurred
-        console.log('other errors: ', error);
-      }
-    },
-    [clearConnectionBy, connectionRecord]
-  );
 
   const request = useCallback(
     (args: QueryConnectionArgs) => {
@@ -215,14 +177,16 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         apiKey,
         queryKey,
       });
-      // api 호출은 apiKey 를 통하고, 요청 및 응답에 대한 상태 관리는 'key' 에 맵핑
+      // apiKey 를 통해 api 모듈을 생성
       getApiModule(category, { ...header })(apiKey, params)
         .then((result) => {
+          // 요청 및 응답 상태(connection) 관리를 위한 데이터는 'key' 에 맵핑
           setDataRecord((prevState) => {
+            //응답에 대한 별도의 parser 를 전달받지 않으면 기본 parser 를 이용하여 응답 데이터를 파싱
             const parser = responseParser || defaultResponseParser;
-
             return {
               ...prevState,
+              // 최신데이터(= 누적된 데이터 혹은 이번 시점에 응답 받은 데이터)를 maxStackSize 에 따라 slice 함
               [key]: getLatestArray(
                 prevState[key],
                 parser(result.data),
@@ -230,6 +194,8 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
               ),
             };
           });
+
+          // 요청에 성공할 경우, 다음 요청 시에는 파라미터가 갱신된 요청을 수행함
           const nextQueryArgs = {
             ...args,
             params: recurParams ? recurParams(params) : params,
@@ -237,25 +203,65 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
           connectionRecord[key].callback = () => request(nextQueryArgs);
         })
-        .catch((error) =>
-          errorHandler({
+        .catch(
+          ({
             error,
             key,
             args,
-          })
+          }: {
+            error: any;
+            key: QueryKey;
+            args: QueryConnectionArgs;
+          }) => {
+            clearConnectionBy(key);
+            //TODO: casing error status
+            // 요청이 동시에 너무 많이 일어날 경우, 에러를 반환하며, 이 때는 기존 요청을 지연시켜 retry 해야함.
+            if (error.status === 429) {
+              console.log('too many request: ', error);
+
+              const timeout = setTimeout(() => {
+                enqueueWaits(args);
+              }, getBackOffTime(tooManyRequestCountRef.current++));
+              connectionRecord[key] = {
+                apiKey: args.apiKey,
+                callback: () => request(args),
+                timeout,
+              };
+            } else {
+              //TODO: retry when error occurred
+              console.log('other errors: ', error);
+            }
+          }
         );
     },
-    [errorHandler, connectionRecord, apiTokenMap]
+    [connectionRecord, apiTokenMap]
+  );
+
+  const queryConnection = useCallback(
+    (args: QueryConnectionArgs) => {
+      const { queryKey, apiKey } = args;
+      const key = getQueryKey({
+        queryKey,
+        apiKey,
+      });
+      clearConnectionBy(key);
+
+      connectionRecord[key] = { apiKey };
+      connectionRecord[key].callback = () => request(args);
+      enqueueWaits(args);
+    },
+    [connectionRecord, apiTokenMap, clearConnectionBy, request]
   );
 
   /* memoized values */
+  // 프로젝트 코드<-> api token 에 대한 데이터가 정상적으로 로드된 상태에서, 특정 프로젝트가 선택되었을 경우, 네트워크 요청이 준비된 상태로 간주
   const isReady = useMemo(() => {
     return !!(apiTokenMap && pcode && apiTokenMap[pcode]);
   }, [apiTokenMap, pcode]);
 
   /* effects */
   useEffect(() => {
-    return () => clearConnection();
+    return () => clear();
   }, []);
 
   useEffect(() => {
@@ -263,29 +269,27 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
       const wait = waitQueue[0];
       if (wait) {
         const { queryKey, intervalTime, apiKey } = wait;
+
         const key = getQueryKey({
           queryKey,
           apiKey,
         });
 
-        const nextInterval = startInterval(() => {
-          const callback = connectionRecord[key].callback;
-          callback && callback();
-        }, intervalTime || CONNECTION_INTERVAL);
-
-        const startIntervalAfter = () => {
-          connectionRecord[key].interval = nextInterval;
+        const intervalStarter = () => {
+          connectionRecord[key].interval = startInterval(() => {
+            const callback = connectionRecord[key].callback;
+            callback && callback();
+          }, intervalTime || CONNECTION_INTERVAL);
         };
 
-        const term = CONNECTION_TERM * waitQueue.length - 1;
-
-        connectionRecord[key].timeout = setTimeout(startIntervalAfter, term);
+        const term = CONNECTION_TERM * (waitQueue.length - 1);
+        connectionRecord[key].timeout = setTimeout(intervalStarter, term);
         dequeueWaits();
       }
     }
 
     return () => {
-      tooManyCount > 0 && tooManyCountRef.current--;
+      tooManyCount > 0 && tooManyRequestCountRef.current--;
     };
   }, [waitQueue, isReady]);
 
