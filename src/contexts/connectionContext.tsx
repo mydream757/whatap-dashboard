@@ -23,17 +23,20 @@ interface ConnectionContextReturn {
   apiTokenMap: Record<ProjectCode, ApiToken>;
 }
 
+// 네트워크 응답 데이터를 저장하기 위한 타입
 export interface ConnectionResult<Data = number> {
   value: Data;
   label?: string | number;
   time: number;
 }
 
+// 각각의 네트워크 요청을 식별하기 위한 key
 type QueryKey = string;
 
 type ProjectCode = number;
 type ApiToken = string;
 
+// 네트워크 요청 주기(timeout, interval) 관련 타입
 type ConnectionState = {
   apiKey: string;
   interval?: NodeJS.Timer;
@@ -44,6 +47,7 @@ export type DataRecord = Record<QueryKey, ConnectionResult[]>;
 
 type ConnectionStateRecord = Record<QueryKey, ConnectionState>;
 
+//네트워크 요청 및 주기적으로 요청하기 위해 필요한 인자
 export interface QueryConnectionArgs<
   Param = { [field: string]: string | number }
 > {
@@ -59,6 +63,7 @@ export interface QueryConnectionArgs<
   intervalTime?: number;
 }
 
+// queryKey 로서, queryKey 가 전달되지 않은 경우 apiKey 를 queryKey 로서 반환함.
 const getQueryKey = ({
   queryKey,
   apiKey,
@@ -66,8 +71,11 @@ const getQueryKey = ({
   return queryKey || apiKey;
 };
 
+// 기본 interval : 5초
 export const CONNECTION_INTERVAL = 5000;
+// 개별 요청(주기) 간격 : 25ms
 const CONNECTION_TERM = 25;
+// backoff 시킬 수 있는 최대치
 const MAXIMUM_BACKOFF = CONNECTION_INTERVAL / 2;
 
 const getBackOffTime = (fail = 0) => {
@@ -90,6 +98,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   const connectionRecordRef = useRef<ConnectionStateRecord>({});
   const connectionRecord = connectionRecordRef.current;
 
+  // 429 오류 (= "Too many requests.) 발생 시, 최근 발생 횟수를 카운트하기 위한 변수의 ref
   const tooManyRequestCountRef = useRef<number>(0);
   const tooManyCount = tooManyRequestCountRef.current;
 
@@ -219,6 +228,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
             if (error.status === 429) {
               console.log('too many request: ', error);
 
+              // 동일 시점에 오류가 많이 발생할 수록, 더 오래 지연시킴.
               const timeout = setTimeout(() => {
                 enqueueWaits(args);
               }, getBackOffTime(tooManyRequestCountRef.current++));
@@ -244,6 +254,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         queryKey,
         apiKey,
       });
+      // 동일 queryKey 에 대한 요청 발생 시, 네트워크 connection 상태를 초기화하고, interval 을 재시작
       clearConnectionBy(key);
 
       connectionRecord[key] = { apiKey };
@@ -275,6 +286,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
           apiKey,
         });
 
+        // 호출되는 순간 콜백을 실행시키고, setInterval을 실행시키는 함수
         const intervalStarter = () => {
           connectionRecord[key].interval = startInterval(() => {
             const callback = connectionRecord[key].callback;
@@ -282,6 +294,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
           }, intervalTime || CONNECTION_INTERVAL);
         };
 
+        // Too many request 요청 오류를 피하기 위해 지연 요청 처리
         const term = CONNECTION_TERM * (waitQueue.length - 1);
         connectionRecord[key].timeout = setTimeout(intervalStarter, term);
         dequeueWaits();
@@ -289,6 +302,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     }
 
     return () => {
+      // 네트워크 요청이 처리될 때마다 실패 카운팅을 점진적으로 줄여, backoff 정도를 조절
       tooManyCount > 0 && tooManyRequestCountRef.current--;
     };
   }, [waitQueue, isReady]);
