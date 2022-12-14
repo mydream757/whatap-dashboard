@@ -1,11 +1,4 @@
-import React, {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEMO_ACCOUNT_API_TOCKEN } from '../api/constants';
 import getApiModule from '../api/getApiModule';
 import { ApiCategoryKeys, OpenApiHeader } from '../types';
@@ -13,6 +6,14 @@ import { defaultResponseParser } from '../constants/parsers';
 import startInterval from '../utils/startInterval';
 import getLatestArray from '../utils/getLatestArray';
 import sleep from '../utils/sleep';
+
+/** ConnectionContext
+ * @description : 네트워크 요청이 동시 다발적으로 일어나 429 오류를 발생시키는 것을 방지하기 위해, 전역 레벨에서 네트워크 요청들을 관리하기 위한 context
+ * - 선택된 프로젝트의 api token 을 request header 에 설정할 수 있도록 제어
+ * - api token 에 대한 정보가 로드될 때까지 요청을 대기시킴
+ * - interval 을 이용하여, 일정 주기마다 네트워크 요청이 수행될 수 있도록 관리
+ * - 네트워크 요청의 응답 결과를 저장하여, context 를 참조하는 컴포넌트에서 데이터를 수신할 수 있도록 함
+ */
 
 interface ConnectionContextReturn {
   queryConnection: (args: QueryConnectionArgs) => void;
