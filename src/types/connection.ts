@@ -6,17 +6,15 @@ type ConnectionConfig<
   Category extends ApiCategoryKeys = ApiCategoryKeys,
   Params = { [key: string]: string | number }
 > = {
-  queryKey?: string;
+  connectionKey?: string;
   apiCategory: Category;
   apiKey: keyof typeof API_CATEGORIES[Category] | string;
   maxStackSize?: number;
   params?: Params;
-  timeout?: number;
+  intervalTime?: number;
   responseParser?: ResponseParser;
   recurParams?: (args?: Params) => Params;
   dataType?: 'series' | 'active';
-  backgroundColor?: string;
-  description?: string;
   title: string;
 };
 
@@ -24,10 +22,8 @@ interface InformaticsConnectionConfig extends ConnectionConfig<'project'> {
   type: 'informatics';
 }
 
-interface ChartConnectionConfig<
-  Widget extends keyof ChartTypeRegistry,
-  Category extends ApiCategoryKeys = ApiCategoryKeys
-> extends ConnectionConfig<Category> {
+interface ChartConnectionConfig<Widget extends keyof ChartTypeRegistry,
+  Category extends ApiCategoryKeys = ApiCategoryKeys> extends ConnectionConfig<Category> {
   type?: Widget;
   datasetOptions?: Partial<ChartTypeRegistry[Widget]['datasetOptions']>;
 }

@@ -30,19 +30,19 @@ const parseConnectionConfig = ({
   apiKey,
   params,
   maxStackSize,
-  queryKey,
+  connectionKey,
   recurParams,
-  timeout,
+  intervalTime,
   responseParser,
 }: ConnectionConfig): Omit<QueryConnectionArgs, 'pcode'> => {
   return {
-    queryKey,
+    connectionKey,
     category: apiCategory,
     apiKey: apiKey,
     params: params,
     maxStackSize: maxStackSize,
     recurParams: recurParams,
-    intervalTime: timeout,
+    intervalTime: intervalTime,
     responseParser: responseParser,
   };
 };

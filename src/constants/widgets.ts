@@ -160,10 +160,10 @@ const WidgetConfig: WidgetListItemRegistry = {
             borderColor: DESIGN.COLOR.red['10'],
             order: 2,
           },
-          timeout: 1000 * 60 * 60,
+          intervalTime: 1000 * 60 * 60,
           title: 'visitors',
           apiCategory: 'project',
-          queryKey: 'previousTotal',
+          connectionKey: 'previousTotal',
           apiKey: 'api/json/visitor_5m/{stime}/{etime}',
           params: {
             etime: startOfToday().getTime(),

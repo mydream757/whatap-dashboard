@@ -31,7 +31,7 @@ export interface ConnectionResult<Data = number> {
 }
 
 // 각각의 네트워크 요청을 식별하기 위한 key
-type QueryKey = string;
+type ConnectionKey = string;
 
 type ProjectCode = number;
 type ApiToken = string;
@@ -43,9 +43,9 @@ type ConnectionState = {
   timeout?: NodeJS.Timer;
   callback?: () => void;
 };
-export type DataRecord = Record<QueryKey, ConnectionResult[]>;
+export type DataRecord = Record<ConnectionKey, ConnectionResult[]>;
 
-type ConnectionStateRecord = Record<QueryKey, ConnectionState>;
+type ConnectionStateRecord = Record<ConnectionKey, ConnectionState>;
 
 //네트워크 요청 및 주기적으로 요청하기 위해 필요한 인자
 export interface QueryConnectionArgs<
@@ -54,7 +54,7 @@ export interface QueryConnectionArgs<
   pcode: number;
   category: ApiCategoryKeys;
   fail?: number;
-  queryKey?: QueryKey;
+  connectionKey?: ConnectionKey;
   apiKey: string;
   responseParser?: (response: any) => ConnectionResult[];
   maxStackSize?: number;
@@ -65,10 +65,10 @@ export interface QueryConnectionArgs<
 
 // queryKey 로서, queryKey 가 전달되지 않은 경우 apiKey 를 queryKey 로서 반환함.
 const getQueryKey = ({
-  queryKey,
+  connectionKey,
   apiKey,
-}: Pick<QueryConnectionArgs, 'apiKey' | 'queryKey'>) => {
-  return queryKey || apiKey;
+}: Pick<QueryConnectionArgs, 'apiKey' | 'connectionKey'>) => {
+  return connectionKey || apiKey;
 };
 
 // 기본 interval : 5초
@@ -104,7 +104,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
   // 네트워크 요청을 통해 적재된 데이터는 유지하고, interval 로 수행되고 있는 모든 네트워크 요청 상태를 초기화함
   const clearConnectionBy = useCallback(
-    (key: QueryKey) => {
+    (key: ConnectionKey) => {
       const connection = connectionRecord[key];
       if (connection) {
         const { timeout, interval } = connection;
@@ -114,7 +114,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         setWaitQueue((prevState) =>
           prevState.filter((data) => {
             const targetKey = getQueryKey({
-              queryKey: data.queryKey,
+              connectionKey: data.connectionKey,
               apiKey: data.apiKey,
             });
             return targetKey !== key;
@@ -159,7 +159,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         category,
         pcode,
         apiKey,
-        queryKey,
+        connectionKey,
         params,
         responseParser,
         recurParams,
@@ -184,7 +184,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
       const key = getQueryKey({
         apiKey,
-        queryKey,
+        connectionKey,
       });
       // apiKey 를 통해 api 모듈을 생성
       getApiModule(category, { ...header })(apiKey, params)
@@ -212,46 +212,36 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
           connectionRecord[key].callback = () => request(nextQueryArgs);
         })
-        .catch(
-          ({
-            error,
-            key,
-            args,
-          }: {
-            error: any;
-            key: QueryKey;
-            args: QueryConnectionArgs;
-          }) => {
-            clearConnectionBy(key);
-            //TODO: casing error status
-            // 요청이 동시에 너무 많이 일어날 경우, 에러를 반환하며, 이 때는 기존 요청을 지연시켜 retry 해야함.
-            if (error.status === 429) {
-              console.log('too many request: ', error);
+        .catch((error) => {
+          clearConnectionBy(key);
+          //TODO: casing error status
+          // 요청이 동시에 너무 많이 일어날 경우, 에러를 반환하며, 이 때는 기존 요청을 지연시켜 retry 해야함.
+          if (error.status === 429) {
+            console.log('too many request: ', error);
 
-              // 동일 시점에 오류가 많이 발생할 수록, 더 오래 지연시킴.
-              const timeout = setTimeout(() => {
-                enqueueWaits(args);
-              }, getBackOffTime(tooManyRequestCountRef.current++));
-              connectionRecord[key] = {
-                apiKey: args.apiKey,
-                callback: () => request(args),
-                timeout,
-              };
-            } else {
-              //TODO: retry when error occurred
-              console.log('other errors: ', error);
-            }
+            // 동일 시점에 오류가 많이 발생할 수록, 더 오래 지연시킴.
+            const timeout = setTimeout(() => {
+              enqueueWaits(args);
+            }, getBackOffTime(tooManyRequestCountRef.current++));
+            connectionRecord[key] = {
+              apiKey: args.apiKey,
+              callback: () => request(args),
+              timeout,
+            };
+          } else {
+            //TODO: retry when error occurred
+            console.log('other errors: ', error);
           }
-        );
+        });
     },
     [connectionRecord, apiTokenMap]
   );
 
   const queryConnection = useCallback(
     (args: QueryConnectionArgs) => {
-      const { queryKey, apiKey } = args;
+      const { connectionKey, apiKey } = args;
       const key = getQueryKey({
-        queryKey,
+        connectionKey,
         apiKey,
       });
       // 동일 queryKey 에 대한 요청 발생 시, 네트워크 connection 상태를 초기화하고, interval 을 재시작
@@ -279,10 +269,10 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
     if (isReady && waitQueue[0]) {
       const wait = waitQueue[0];
       if (wait) {
-        const { queryKey, intervalTime, apiKey } = wait;
+        const { connectionKey, intervalTime, apiKey } = wait;
 
         const key = getQueryKey({
-          queryKey,
+          connectionKey,
           apiKey,
         });
 

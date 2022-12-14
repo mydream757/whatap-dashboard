@@ -55,13 +55,13 @@ const getWhatapChartData = ({
   return {
     labels: labels || [],
     datasets: dataConfigs.map(
-      ({ type: eachType, apiKey, queryKey, datasetOptions }) => {
+      ({ type: eachType, apiKey, connectionKey, datasetOptions }) => {
         return {
           ...getDatasetConfig({
             type: eachType || type,
             datasetOptions,
           }),
-          data: (dataRecord[queryKey || apiKey] || []).map(
+          data: (dataRecord[connectionKey || apiKey] || []).map(
             (result) => result?.value
           ),
         };

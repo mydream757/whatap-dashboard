@@ -48,7 +48,7 @@ export function WidgetList({
     <GridContainer colSpan={colSpans}>
       {list.map(({ header, body, labelKey }, index) => {
         const queryKeys = body.dataConfigs.map(
-          ({ apiKey, queryKey }) => queryKey || apiKey
+          ({ apiKey, connectionKey }) => connectionKey || apiKey
         );
         return (
           <Widget
