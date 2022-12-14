@@ -68,16 +68,6 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         const { timeout, interval } = connection;
         clearTimeout(timeout);
         clearInterval(interval);
-        // connection 을 종료할 경우, 그 key 에 해당하는 '대기 상태의 요청' 또한 삭제한다.
-        setWaitQueue((prevState) =>
-          prevState.filter((data) => {
-            const targetKey = getFinalConnectionKey({
-              connectionKey: data.connectionKey,
-              apiKey: data.apiKey,
-            });
-            return targetKey !== key;
-          })
-        );
         delete connectionRecord[key];
       }
     },
@@ -85,10 +75,23 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   );
   /* callbacks */
   const clearConnections = useCallback(() => {
-    for (const query in connectionRecord) {
-      clearConnectionBy(query);
+    for (const connectionKey in connectionRecord) {
+      clearConnectionBy(connectionKey);
+      setWaitQueue([]);
     }
   }, [clearConnectionBy]);
+
+  const clearWaitQueueBy = useCallback(
+    (key: string) => {
+      const nextQueue = waitQueue.filter((args) => {
+        return args.connectionKey !== key;
+      });
+      if (waitQueue.length !== nextQueue.length) {
+        setWaitQueue(nextQueue);
+      }
+    },
+    [waitQueue]
+  );
 
   const enqueueWaits = useCallback((args: QueryConnectionArgs) => {
     setWaitQueue((prevState) => [...prevState, args]);
@@ -202,12 +205,18 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         connectionKey,
         apiKey,
       });
-      // 동일 queryKey 에 대한 요청 발생 시, 네트워크 connection 상태를 초기화하고, interval 을 재시작
+
+      // 동일 connectionKey 에 대한 요청 발생 시, 네트워크 connection 상태를 초기화하고, interval 을 재시작
       clearConnectionBy(key);
+      clearWaitQueueBy(key);
+      const parsedArguments = {
+        ...args,
+        connectionKey: key,
+      };
 
       connectionRecord[key] = { apiKey };
-      connectionRecord[key].callback = () => request(args);
-      enqueueWaits(args);
+      connectionRecord[key].callback = () => request(parsedArguments);
+      enqueueWaits(parsedArguments);
     },
     [connectionRecord, apiTokenMap, clearConnectionBy, request]
   );
@@ -224,35 +233,31 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (isReady && waitQueue[0]) {
+    if (isReady && waitQueue.length) {
       const wait = waitQueue[0];
-      if (wait) {
-        const { connectionKey, intervalTime, apiKey } = wait;
+      const { connectionKey, intervalTime } = wait;
 
-        const key = getFinalConnectionKey({
-          connectionKey,
-          apiKey,
-        });
-
+      if (connectionKey && connectionRecord[connectionKey]) {
         // 호출되는 순간 콜백을 실행시키고, setInterval을 실행시키는 함수
         const intervalStarter = () => {
-          connectionRecord[key].interval = startInterval(() => {
-            const callback = connectionRecord[key].callback;
+          connectionRecord[connectionKey].interval = startInterval(() => {
+            const callback = connectionRecord[connectionKey].callback;
             callback && callback();
           }, intervalTime || CONNECTION_INTERVAL);
         };
 
+        const connectionCount = waitQueue.length;
         // Too many request 요청 오류를 피하기 위해 지연 요청 처리
-        const term = CONNECTION_TERM * (waitQueue.length - 1);
-        connectionRecord[key].timeout = setTimeout(intervalStarter, term);
-        dequeueWaits();
+        const term = CONNECTION_TERM * (connectionCount - 1);
+        connectionRecord[connectionKey].timeout = setTimeout(
+          intervalStarter,
+          term
+        );
+        tooManyCount > 0 && tooManyRequestCountRef.current--;
       }
-    }
 
-    return () => {
-      // 네트워크 요청이 처리될 때마다 실패 카운팅을 점진적으로 줄여, backoff 정도를 조절
-      tooManyCount > 0 && tooManyRequestCountRef.current--;
-    };
+      dequeueWaits();
+    }
   }, [waitQueue, isReady]);
 
   return (
