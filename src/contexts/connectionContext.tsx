@@ -47,7 +47,7 @@ export type DataRecord = Record<ConnectionKey, ConnectionResult[]>;
 
 type ConnectionStateRecord = Record<ConnectionKey, ConnectionState>;
 
-//네트워크 요청 및 주기적으로 요청하기 위해 필요한 인자
+//네트워크 요청을 반복적으로 수행토록 요청(query)하기 위해 필요한 인자
 export interface QueryConnectionArgs<
   Param = { [field: string]: string | number }
 > {
@@ -64,7 +64,7 @@ export interface QueryConnectionArgs<
 }
 
 // queryKey 로서, queryKey 가 전달되지 않은 경우 apiKey 를 queryKey 로서 반환함.
-const getQueryKey = ({
+const getFinalConnectionKey = ({
   connectionKey,
   apiKey,
 }: Pick<QueryConnectionArgs, 'apiKey' | 'connectionKey'>) => {
@@ -113,7 +113,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
         // connection 을 종료할 경우, 그 key 에 해당하는 '대기 상태의 요청' 또한 삭제한다.
         setWaitQueue((prevState) =>
           prevState.filter((data) => {
-            const targetKey = getQueryKey({
+            const targetKey = getFinalConnectionKey({
               connectionKey: data.connectionKey,
               apiKey: data.apiKey,
             });
@@ -182,7 +182,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
           break;
       }
 
-      const key = getQueryKey({
+      const key = getFinalConnectionKey({
         apiKey,
         connectionKey,
       });
@@ -240,7 +240,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   const queryConnection = useCallback(
     (args: QueryConnectionArgs) => {
       const { connectionKey, apiKey } = args;
-      const key = getQueryKey({
+      const key = getFinalConnectionKey({
         connectionKey,
         apiKey,
       });
@@ -271,7 +271,7 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
       if (wait) {
         const { connectionKey, intervalTime, apiKey } = wait;
 
-        const key = getQueryKey({
+        const key = getFinalConnectionKey({
           connectionKey,
           apiKey,
         });
