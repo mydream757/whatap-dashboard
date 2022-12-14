@@ -16,8 +16,8 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js';
-import DESIGN from '../../system/design';
 import { ChartConnectionConfig } from '../../types';
+import { DESIGN } from '../../system';
 
 ChartJS.register(
   LinearScale,

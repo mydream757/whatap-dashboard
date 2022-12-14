@@ -2,7 +2,7 @@ import { WidgetProps } from '../components/complex/widget/Widget';
 import { API_CATEGORIES } from '../api/constants';
 import API_RESPONSE_PARSERS from './parsers';
 import { startOfToday, subDays } from 'date-fns';
-import DESIGN from '../system/design';
+import { DESIGN } from '../system';
 
 export interface WidgetListItem extends WidgetProps {
   labelKey?: string;

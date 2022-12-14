@@ -1,3 +1,7 @@
+/** Design
+ * @description : 전역적으로 참조할 디자인 요소 정의
+ */
+
 type RGB = `rgb(${number}, ${number}, ${number})`;
 type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
 type HEX = `#${string}`;

@@ -2,10 +2,13 @@ import { API_CATEGORIES } from '../api/constants';
 import { ChartTypeRegistry } from 'chart.js';
 import { ResponseParser } from '../constants/parsers';
 
-type ConnectionConfig<
-  Category extends ApiCategoryKeys = ApiCategoryKeys,
-  Params = { [key: string]: string | number }
-> = {
+/** Connection
+ * @description
+ *  네트워크 요청이 주기적으로 일어나게 만드는 행위를 Connection 이라 정의함.
+ */
+
+type ConnectionConfig<Category extends ApiCategoryKeys = ApiCategoryKeys,
+  Params = { [key: string]: string | number }> = {
   connectionKey?: string;
   apiCategory: Category;
   apiKey: keyof typeof API_CATEGORIES[Category] | string;
