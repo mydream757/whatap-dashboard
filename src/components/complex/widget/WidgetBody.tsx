@@ -1,18 +1,20 @@
 import React, { ReactElement } from 'react';
-import { DataRecord } from '../../../contexts/connectionContext';
 import { ChartOptions } from 'chart.js';
 import {
   ChartConnectionConfig,
+  DataRecord,
   InformaticsConnectionConfig,
-} from '../../../types';
-import { Informatics, WhatapChart } from '../../basic';
-import { getDatasetConfig } from '../../basic/WhatapChart';
+} from '../../../@types';
+import { getDatasetConfig, Informatics, WhatapChart } from '../../basic';
 
 type ChartType = 'line' | 'bar';
 
 type Label = string | number;
 
-export type BodyProps = (getWhatapChartDataArgs | getInformaticsDataArgs) & {
+export type WidgetBodyProps = (
+  | getWhatapChartDataArgs
+  | getInformaticsDataArgs
+) & {
   type: 'informatics' | ChartType;
   options?: ChartOptions;
   labels?: Label[];
@@ -76,7 +78,7 @@ export default function WidgetBody({
   dataConfigs,
   labels,
   options,
-}: BodyProps): ReactElement {
+}: WidgetBodyProps): ReactElement {
   switch (type) {
     case 'bar':
     case 'line':

@@ -1,5 +1,3 @@
-import IconButton from './IconButton';
-import Informatics from './Informatics';
-import WhatapChart from './WhatapChart';
-
-export { IconButton, Informatics, WhatapChart };
+export * from './IconButton';
+export * from './Informatics';
+export * from './WhatapChart';

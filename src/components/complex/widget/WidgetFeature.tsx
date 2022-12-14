@@ -1,11 +1,8 @@
 import React, { ReactElement } from 'react';
-import IconButton, { IconButtonProps } from '../../basic/IconButton';
+import { IconButton } from '../../basic';
+import { IconButtonProps, WidgetFeatureProps } from '../../../@types';
 
-export type WidgetFeatureProps =
-  | ({ type: 'iconButton' } & IconButtonProps)
-  | { type: 'toggle' };
-
-export default function WidgetFeature({
+export function WidgetFeature({
   type,
   ...props
 }: WidgetFeatureProps): ReactElement {

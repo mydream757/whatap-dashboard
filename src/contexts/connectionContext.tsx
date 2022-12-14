@@ -1,11 +1,17 @@
 import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEMO_ACCOUNT_API_TOCKEN } from '../api/constants';
-import getApiModule from '../api/getApiModule';
-import { ApiCategoryKeys, OpenApiHeader } from '../types';
-import { defaultResponseParser } from '../constants/parsers';
-import startInterval from '../utils/startInterval';
-import getLatestArray from '../utils/getLatestArray';
-import sleep from '../utils/sleep';
+import {
+  ApiToken,
+  ConnectionContextReturn,
+  ConnectionKey,
+  ConnectionStateRecord,
+  DataRecord,
+  OpenApiHeader,
+  ProjectCode,
+  QueryConnectionArgs,
+} from '../@types';
+import { getLatestArray, sleep, startInterval } from '../utils';
+import { defaultResponseParser, DEMO_ACCOUNT_API_TOCKEN } from '../constants';
+import { getApiModule } from '../api';
 
 /** ConnectionContext
  * @description : 네트워크 요청이 동시 다발적으로 일어나 429 오류를 발생시키는 것을 방지하기 위해, 전역 레벨에서 네트워크 요청들을 관리하기 위한 context
@@ -14,55 +20,6 @@ import sleep from '../utils/sleep';
  * - interval 을 이용하여, 일정 주기마다 네트워크 요청이 수행될 수 있도록 관리
  * - 네트워크 요청의 응답 결과를 저장하여, context 를 참조하는 컴포넌트에서 데이터를 수신할 수 있도록 함
  */
-
-interface ConnectionContextReturn {
-  queryConnection: (args: QueryConnectionArgs) => void;
-  selectProject: (projectCode: number) => void;
-  setApiTokenMap: (value: { [key: ApiToken]: string }) => void;
-  dataRecord: DataRecord;
-  clear: () => void;
-  apiTokenMap: Record<ProjectCode, ApiToken>;
-}
-
-// 네트워크 응답 데이터를 저장하기 위한 타입
-export interface ConnectionResult<Data = number> {
-  value: Data;
-  label?: string | number;
-  time: number;
-}
-
-// 각각의 네트워크 요청을 식별하기 위한 key
-type ConnectionKey = string;
-
-type ProjectCode = number;
-type ApiToken = string;
-
-// 네트워크 요청 주기(timeout, interval) 관련 타입
-type ConnectionState = {
-  apiKey: string;
-  interval?: NodeJS.Timer;
-  timeout?: NodeJS.Timer;
-  callback?: () => void;
-};
-export type DataRecord = Record<ConnectionKey, ConnectionResult[]>;
-
-type ConnectionStateRecord = Record<ConnectionKey, ConnectionState>;
-
-//네트워크 요청을 반복적으로 수행토록 요청(query)하기 위해 필요한 인자
-export interface QueryConnectionArgs<
-  Param = { [field: string]: string | number }
-> {
-  pcode: number;
-  category: ApiCategoryKeys;
-  fail?: number;
-  connectionKey?: ConnectionKey;
-  apiKey: string;
-  responseParser?: (response: any) => ConnectionResult[];
-  maxStackSize?: number;
-  params?: Param;
-  recurParams?: (args?: Param) => Param;
-  intervalTime?: number;
-}
 
 // queryKey 로서, queryKey 가 전달되지 않은 경우 apiKey 를 queryKey 로서 반환함.
 const getFinalConnectionKey = ({

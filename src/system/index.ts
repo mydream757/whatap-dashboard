@@ -1,3 +1,3 @@
-import DESIGN from './design';
+import { DESIGN } from './design';
 
 export { DESIGN };

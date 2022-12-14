@@ -1,18 +1,10 @@
-import { WidgetProps } from '../components/complex/widget/Widget';
-import { API_CATEGORIES } from '../api/constants';
-import API_RESPONSE_PARSERS from './parsers';
 import { startOfToday, subDays } from 'date-fns';
-import { DESIGN } from '../system';
+import { DESIGN } from '../../system';
+import { WidgetListItemRegistry } from '../../@types';
+import { API_CATEGORIES } from '../api';
+import { API_RESPONSE_PARSERS } from '../parsers';
 
-export interface WidgetListItem extends WidgetProps {
-  labelKey?: string;
-}
-
-export type WidgetListItemRegistry = {
-  [key: string]: WidgetListItem;
-};
-
-const WidgetConfig: WidgetListItemRegistry = {
+export const WidgetConfig: WidgetListItemRegistry = {
   activeStatus: {
     header: {
       title: 'Active Status',
@@ -267,5 +259,3 @@ const WidgetConfig: WidgetListItemRegistry = {
     },
   },
 };
-
-export default WidgetConfig;

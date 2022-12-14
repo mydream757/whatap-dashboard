@@ -1,4 +1,4 @@
-import { API_CATEGORIES, API_ROOT } from './constants';
+import { API_CATEGORIES, API_ROOT } from '../constants';
 
 const getPath = (url, param = {}) => {
   let path = url;
@@ -9,7 +9,7 @@ const getPath = (url, param = {}) => {
   return path;
 };
 
-const getOpenApi = (category, header) => (apiKey, param) =>
+export const getApiModule = (category, header) => (apiKey, param) =>
   new Promise((resolve, reject) => {
     if (apiKey in API_CATEGORIES[category]) {
       return resolve({
@@ -37,5 +37,3 @@ const getOpenApi = (category, header) => (apiKey, param) =>
         data,
       }))
   );
-
-export default getOpenApi;

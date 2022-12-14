@@ -1,19 +1,7 @@
 /** Design
  * @description : 전역적으로 참조할 디자인 요소 정의
  */
-
-type RGB = `rgb(${number}, ${number}, ${number})`;
-type RGBA = `rgba(${number}, ${number}, ${number}, ${number})`;
-type HEX = `#${string}`;
-
-export type Color = RGB | RGBA | HEX;
-
-type BasicColor = 'black' | 'grey' | 'mint' | 'red';
-type Tone = 10 | 100;
-
-type ColorPalette = {
-  [tone in Tone]: Color;
-};
+import { BasicColor, ColorPalette } from '../@types';
 
 const COLOR_REGISTRY: { [color in BasicColor]: ColorPalette } = {
   black: {
@@ -34,8 +22,6 @@ const COLOR_REGISTRY: { [color in BasicColor]: ColorPalette } = {
   },
 } as const;
 
-const DESIGN = {
+export const DESIGN = {
   COLOR: COLOR_REGISTRY,
 } as const;
-
-export default DESIGN;

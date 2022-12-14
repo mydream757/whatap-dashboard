@@ -1,17 +1,13 @@
 import { Col, Row } from 'antd';
-import React, { ReactElement, ReactNode } from 'react';
-
-interface GridLayoutProps {
-  colSpan?: number | (number | undefined)[];
-  children?: ReactNode;
-}
+import React, { ReactElement } from 'react';
+import { FlexibleGridContainerProps } from '../../@types/container';
 
 const DEFAULT_COL_SPAN = 12;
 
-export default function FlexibleGridContainer({
+export function FlexibleGridContainer({
   colSpan,
   children,
-}: GridLayoutProps): ReactElement {
+}: FlexibleGridContainerProps): ReactElement {
   const elements = Array.isArray(children) ? children : [children];
   const spans = Array.isArray(colSpan) ? colSpan : [colSpan];
 

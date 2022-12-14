@@ -1,4 +1,4 @@
-const getLatestArray = <T>(
+export const getLatestArray = <T>(
   prevData: T[] = [],
   data: T[],
   maxSize?: number
@@ -15,5 +15,3 @@ const getLatestArray = <T>(
     return mergedRecord;
   }
 };
-
-export default getLatestArray;

@@ -1,5 +1,1 @@
-import getOpenApi from './getApiModule';
-
-export default {
-  getOpenApi,
-};
+export * from './getApiModule';

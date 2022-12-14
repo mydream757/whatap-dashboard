@@ -1,18 +1,8 @@
 import React, { ReactElement } from 'react';
 import { Col, Row, Space } from 'antd';
+import { InformaticsProps } from '../../@types/chart/informatics';
 
-type InformaticsData = {
-  apiKey?: string;
-  title: string;
-  value: number;
-};
-
-interface InformaticsProps {
-  loading?: boolean;
-  datum: InformaticsData[];
-}
-
-export default function Informatics({ datum }: InformaticsProps): ReactElement {
+export function Informatics({ datum }: InformaticsProps): ReactElement {
   return (
     <Space
       style={{

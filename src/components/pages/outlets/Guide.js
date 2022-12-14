@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import getApiModule from '../../../api/getApiModule';
-import { DEMO_ACCOUNT_API_TOCKEN, DEMO_PROJECT_API_TOCKEN, DEMO_PROJECT_CODE } from '../../../api/constants';
+import { getApiModule } from '../../../api';
+import { DEMO_ACCOUNT_API_TOCKEN, DEMO_PROJECT_API_TOCKEN, DEMO_PROJECT_CODE } from '../../../constants';
 
 //const HOUR = 1000 * 60 * 60;
 

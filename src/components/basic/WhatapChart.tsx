@@ -16,8 +16,8 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js';
-import { ChartConnectionConfig } from '../../types';
-import { DESIGN } from '../../system';
+import { WhatapChartRegistry } from '../../constants/whatapChart';
+import { ChartConnectionConfig } from '../../@types';
 
 ChartJS.register(
   LinearScale,
@@ -32,30 +32,6 @@ ChartJS.register(
   BarController
 );
 
-export const WhatapChartRegistry: {
-  [chartType in ChartType]+?: {
-    [options in keyof ChartTypeRegistry[chartType]]+?: Partial<
-      ChartTypeRegistry[chartType][options]
-    >;
-  };
-} = {
-  line: {
-    datasetOptions: {
-      pointHoverRadius: 1,
-      pointStyle: 'circle',
-      backgroundColor: DESIGN.COLOR.mint['100'],
-      borderColor: DESIGN.COLOR.mint['100'],
-    },
-  },
-  bar: {
-    datasetOptions: {
-      pointStyle: 'circle',
-      backgroundColor: DESIGN.COLOR.mint['100'],
-      borderColor: DESIGN.COLOR.mint['100'],
-    },
-  },
-} as const;
-
 export const getDatasetConfig = ({
   type = 'line',
   datasetOptions,
@@ -66,7 +42,7 @@ export const getDatasetConfig = ({
   } as Partial<ChartTypeRegistry[typeof type]['datasetOptions']>;
 };
 
-export default function WhatapChart({ ...props }: ChartProps): ReactElement {
+export function WhatapChart({ ...props }: ChartProps): ReactElement {
   return (
     <Chart
       {...props}

@@ -1,19 +1,10 @@
-import React, { ReactElement } from 'react';
-import Icon, { RightOutlined } from '@ant-design/icons';
+import React, { ForwardRefExoticComponent, ReactElement } from 'react';
+import Icon from '@ant-design/icons';
+import { IconRegistry } from '../../constants';
+import { IconButtonProps } from '../../@types';
 
 /* TODO: 필요 시 antd 를 통해 사용할 index key 와 컴포넌트 스펙 등록 */
-const IconRegistry = {
-  'arrow-right': RightOutlined,
-} as const;
-
-export type IconKey = keyof typeof IconRegistry;
-
-export interface IconButtonProps {
-  iconKey: IconKey;
-  onClick?: () => void;
-}
-
-export default function IconButton({
+export function IconButton({
   iconKey,
   onClick,
 }: IconButtonProps): ReactElement {
@@ -36,9 +27,7 @@ export default function IconButton({
       onClick={onClick}
     >
       <Icon
-        component={
-          IconRegistry[iconKey] as React.ForwardRefExoticComponent<any>
-        }
+        component={IconRegistry[iconKey] as ForwardRefExoticComponent<any>}
       />
     </button>
   );

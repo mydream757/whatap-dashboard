@@ -1,15 +1,5 @@
-import { ConnectionResult } from '../contexts/connectionContext';
-import { API_CATEGORIES } from '../api/constants';
 import { format } from 'date-fns';
-
-export type ResponseParser = (response: any) => ConnectionResult[];
-type apiKeys =
-  | keyof typeof API_CATEGORIES['project']
-  | keyof typeof API_CATEGORIES['account'];
-
-type ParserName = `${apiKeys}-into-${string}`;
-
-type ParserRegistry = { [key: ParserName]: ResponseParser };
+import { ParserRegistry, ResponseParser } from '../@types/api';
 
 export const defaultResponseParser: ResponseParser = (response: number) => {
   return [
@@ -21,7 +11,7 @@ export const defaultResponseParser: ResponseParser = (response: number) => {
   ];
 };
 
-const API_RESPONSE_PARSERS: ParserRegistry = {
+export const API_RESPONSE_PARSERS: ParserRegistry = {
   'api/json/remote/{stime}/{etime}-into-country': (response: {
     records: {
       city: string;
@@ -83,5 +73,3 @@ const API_RESPONSE_PARSERS: ParserRegistry = {
     });
   },
 } as const;
-
-export default API_RESPONSE_PARSERS;

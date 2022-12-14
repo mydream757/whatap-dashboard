@@ -1,13 +1,10 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { Layout } from 'antd';
-import {
-  QueryConnectionArgs,
-  useConnection,
-} from '../../../contexts/connectionContext';
+import { useConnection } from '../../../contexts/connectionContext';
+import { WidgetConfig } from '../../../constants';
+import { ConnectionConfig, QueryConnectionArgs } from '../../../@types';
 import { useLoaderData } from 'react-router-dom';
-import WidgetConfig from '../../../constants/widgets';
-import { WidgetList } from '../../list/WidgetList';
-import { ConnectionConfig } from '../../../types';
+import { WidgetList } from '../../list';
 
 export function dashboardLoader({ params }: { params: { pcode: string } }) {
   return params.pcode;

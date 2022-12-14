@@ -1,14 +1,7 @@
 import React, { ReactElement } from 'react';
-import { DataRecord } from '../../contexts/connectionContext';
-import Widget from '../complex/widget';
-import { WidgetListItem } from '../../constants/widgets';
-import GridContainer from '../container';
-
-interface WidgetListProps {
-  datum: DataRecord;
-  list: WidgetListItem[];
-  colSpans: number[];
-}
+import { DataRecord, WidgetListItem, WidgetListProps } from '../../@types';
+import { FlexibleGridContainer } from '../container';
+import { Widget } from '../complex';
 
 const getItemData = ({
   labelKey,
@@ -45,7 +38,7 @@ export function WidgetList({
   colSpans,
 }: WidgetListProps): ReactElement {
   return (
-    <GridContainer colSpan={colSpans}>
+    <FlexibleGridContainer colSpan={colSpans}>
       {list.map(({ header, body, labelKey }, index) => {
         const queryKeys = body.dataConfigs.map(
           ({ apiKey, connectionKey }) => connectionKey || apiKey
@@ -65,6 +58,6 @@ export function WidgetList({
           />
         );
       })}
-    </GridContainer>
+    </FlexibleGridContainer>
   );
 }

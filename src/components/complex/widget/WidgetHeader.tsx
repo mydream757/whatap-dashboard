@@ -1,6 +1,7 @@
 import React, { ReactElement } from 'react';
 import { Col, Row } from 'antd';
-import WidgetFeature, { WidgetFeatureProps } from './WidgetFeature';
+import { WidgetFeatureProps } from '../../../@types';
+import { WidgetFeature } from './WidgetFeature';
 
 export interface HeaderProps {
   title?: string;
