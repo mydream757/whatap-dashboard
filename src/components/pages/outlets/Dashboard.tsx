@@ -1,14 +1,17 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { Layout } from 'antd';
-import { useConnection } from '../../../contexts/connectionContext';
-import { WidgetConfig } from '../../../constants';
 import { ConnectionConfig, QueryConnectionArgs } from '../../../@types';
 import { useLoaderData } from 'react-router-dom';
+import { WidgetConfig } from '../../../constants';
+import { useConnection } from '../../../contexts/connectionContext';
 import { WidgetList } from '../../list';
+import { AgnosticNonIndexRouteObject } from '@remix-run/router';
 
-export function dashboardLoader({ params }: { params: { pcode: string } }) {
+export const dashboardLoader: AgnosticNonIndexRouteObject['loader'] = ({
+  params,
+}) => {
   return params.pcode;
-}
+};
 
 const colSpans = [6, 6, 12, 12, 12, 12, 12, 12];
 const initialList: (keyof typeof WidgetConfig)[] = [
