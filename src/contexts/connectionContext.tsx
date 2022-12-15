@@ -31,18 +31,19 @@ const getFinalConnectionKey = ({
 
 // 기본 interval : 5초
 export const CONNECTION_INTERVAL = 5000;
-// 개별 요청(주기) 간격 : 25ms
-const CONNECTION_TERM = 25;
+const BACKOFF_BASE = 100;
 // backoff 시킬 수 있는 최대치
 const MAXIMUM_BACKOFF = CONNECTION_INTERVAL / 2;
 
+const MAX_BUFFER = 6;
 const getBackOffTime = (fail = 0) => {
-  return Math.min(CONNECTION_TERM + 2 ** fail, MAXIMUM_BACKOFF);
+  return Math.min(BACKOFF_BASE + 2 ** fail, MAXIMUM_BACKOFF);
 };
 
 function ConnectionProvider({ children }: { children?: ReactNode }) {
   /* states */
   const [pcode, setPcode] = useState<ProjectCode>();
+  const [concurrentCount, setConcurrentCount] = useState(0);
   //'프로젝트 코드 <-> 프로젝트의 api 토큰'에 대한 map
   const [apiTokenMap, setApiTokenMap] = useState<Record<ProjectCode, ApiToken>>(
     {}
@@ -193,6 +194,9 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
             //TODO: retry when error occurred
             console.log('other errors: ', error);
           }
+        })
+        .finally(() => {
+          setConcurrentCount((prevState) => prevState - 1);
         });
     },
     [connectionRecord, apiTokenMap]
@@ -224,8 +228,13 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
   /* memoized values */
   // 프로젝트 코드<-> api token 에 대한 데이터가 정상적으로 로드된 상태에서, 특정 프로젝트가 선택되었을 경우, 네트워크 요청이 준비된 상태로 간주
   const isReady = useMemo(() => {
-    return !!(apiTokenMap && pcode && apiTokenMap[pcode]);
-  }, [apiTokenMap, pcode]);
+    return !!(
+      apiTokenMap &&
+      pcode &&
+      apiTokenMap[pcode] &&
+      concurrentCount < MAX_BUFFER
+    );
+  }, [apiTokenMap, pcode, concurrentCount]);
 
   /* effects */
   useEffect(() => {
@@ -239,26 +248,18 @@ function ConnectionProvider({ children }: { children?: ReactNode }) {
 
       if (connectionKey && connectionRecord[connectionKey]) {
         // 호출되는 순간 콜백을 실행시키고, setInterval을 실행시키는 함수
-        const intervalStarter = () => {
-          connectionRecord[connectionKey].interval = startInterval(() => {
-            const callback = connectionRecord[connectionKey].callback;
-            callback && callback();
-          }, intervalTime || CONNECTION_INTERVAL);
-        };
+        connectionRecord[connectionKey].interval = startInterval(() => {
+          setConcurrentCount((prevState) => prevState + 1);
+          const callback = connectionRecord[connectionKey].callback;
+          callback && callback();
+        }, intervalTime || CONNECTION_INTERVAL);
 
-        const connectionCount = waitQueue.length;
-        // Too many request 요청 오류를 피하기 위해 지연 요청 처리
-        const term = CONNECTION_TERM * (connectionCount - 1);
-        connectionRecord[connectionKey].timeout = setTimeout(
-          intervalStarter,
-          term
-        );
         tooManyCount > 0 && tooManyRequestCountRef.current--;
       }
 
       dequeueWaits();
     }
-  }, [waitQueue, isReady]);
+  }, [isReady, waitQueue]);
 
   return (
     <ConnectionContext.Provider
