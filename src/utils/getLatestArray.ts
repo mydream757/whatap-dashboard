@@ -8,8 +8,9 @@ export const getLatestArray = <T>(
   } else {
     const mergedRecord = [...prevData, ...data];
 
-    while (maxSize < mergedRecord.length) {
-      mergedRecord.shift();
+    const dif = mergedRecord.length - maxSize;
+    if (dif > 0) {
+      mergedRecord.splice(0, dif);
     }
 
     return mergedRecord;
