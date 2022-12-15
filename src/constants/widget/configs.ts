@@ -1,8 +1,8 @@
 import { startOfToday, subDays } from 'date-fns';
-import { DESIGN } from '../../system';
 import { WidgetListItemRegistry } from '../../@types';
 import { API_CATEGORIES } from '../api';
 import { API_RESPONSE_PARSERS } from '../parsers';
+import { DESIGN } from '../design';
 
 export const WidgetConfig: WidgetListItemRegistry = {
   activeStatus: {

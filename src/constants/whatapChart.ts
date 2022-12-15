@@ -1,5 +1,5 @@
 import { ChartType, ChartTypeRegistry } from 'chart.js';
-import { DESIGN } from '../system';
+import { DESIGN } from './design';
 
 export const WhatapChartRegistry: {
   [chartType in ChartType]+?: {
